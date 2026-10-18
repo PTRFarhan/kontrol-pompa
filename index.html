@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b3a53">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Kontrol Pompa</title>
+<style>
+:root{
+  --bg:#0b2233; --card:#12354d; --card2:#174563; --text:#eaf4fb; --muted:#8fb0c6;
+  --accent:#2fb4ff; --ok:#2ecc71; --warn:#f5a623; --bad:#ff5c5c;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  padding-bottom:calc(76px + env(safe-area-inset-bottom));}
+header{padding:18px 16px 8px;display:flex;align-items:center;justify-content:space-between}
+header h1{font-size:20px;margin:0}
+.badge{font-size:12px;padding:4px 10px;border-radius:99px;background:var(--card2);color:var(--muted)}
+.badge.demo{background:var(--warn);color:#1b1200}
+main{padding:8px 16px 16px;max-width:560px;margin:0 auto}
+.page{display:none}.page.active{display:block}
+.card{background:var(--card);border-radius:18px;padding:16px;margin-bottom:14px}
+.card h2{font-size:15px;margin:0 0 12px;color:var(--muted);font-weight:600;letter-spacing:.3px}
+.tanks{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tankbox{background:var(--card);border-radius:18px;padding:14px;text-align:center}
+.tankbox h3{margin:0 0 10px;font-size:15px}
+.tank{position:relative;width:96px;height:150px;margin:0 auto 10px;border:3px solid #6fa8c9;border-radius:10px 10px 18px 18px;
+  overflow:hidden;background:rgba(255,255,255,.05)}
+.tank::before{content:"";position:absolute;top:-7px;left:-6px;right:-6px;height:10px;background:#6fa8c9;border-radius:6px;z-index:2}
+.water{position:absolute;left:0;right:0;bottom:0;height:0%;background:linear-gradient(#4cc3ff,#1b8fd6);transition:height .9s ease}
+.water::after{content:"";position:absolute;top:-5px;left:0;right:0;height:10px;background:rgba(255,255,255,.25);border-radius:50%}
+.pct{font-size:30px;font-weight:700;line-height:1}
+.liter{font-size:14px;color:var(--muted);margin-top:4px}
+.upd{font-size:11px;color:var(--muted);margin-top:6px;min-height:14px}
+button{font:inherit;border:0;border-radius:14px;padding:13px 16px;cursor:pointer;color:var(--text);background:var(--card2)}
+button:active{transform:scale(.98)}
+button.primary{background:var(--accent);color:#04202f;font-weight:700}
+button.on{background:var(--ok);color:#052a14;font-weight:700}
+button.off{background:var(--bad);color:#2a0606;font-weight:700}
+button:disabled{opacity:.5}
+.row{display:flex;gap:10px}
+.row>*{flex:1}
+.full{width:100%}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{padding:9px 14px;border-radius:99px;font-size:14px;background:var(--card2)}
+.chip.sel{background:var(--accent);color:#04202f;font-weight:700}
+input,select{font:inherit;width:100%;padding:12px;border-radius:12px;border:1px solid #2b5878;background:#0e2b40;color:var(--text)}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 6px}
+.pumpstate{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.dot{width:14px;height:14px;border-radius:50%;background:#556;flex:none}
+.dot.on{background:var(--ok);box-shadow:0 0 12px var(--ok)}
+.pumpstate b{font-size:18px}
+.small{font-size:12px;color:var(--muted)}
+.kv{display:flex;justify-content:space-between;font-size:14px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.kv:last-child{border:0}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:#0a1c2a;border-top:1px solid #1d4361;
+  padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border-radius:0;background:none;padding:14px 8px;color:var(--muted);font-size:14px}
+nav button.active{color:var(--accent);font-weight:700}
+#gate{position:fixed;inset:0;background:var(--bg);z-index:10;align-items:center;justify-content:center;padding:20px}
+.gatebox{background:var(--card);border-radius:18px;padding:20px;width:100%;max-width:400px}
+.gatebox h2{margin:0 0 8px;font-size:18px}
+#toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#000c;color:#fff;
+  padding:10px 16px;border-radius:99px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s;max-width:90%;text-align:center}
+#toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>💧 Kontrol Pompa</h1>
+  <span id="modeBadge" class="badge">...</span>
+</header>
+
+<main>
+
+<!-- ============ BERANDA ============ -->
+<section id="pg-home" class="page active">
+
+  <div class="card">
+    <h2>POMPA</h2>
+    <div class="pumpstate">
+      <div id="pumpDot" class="dot"></div>
+      <div>
+        <b id="pumpText">MATI</b>
+        <div class="small" id="pumpSub">Belum ada data</div>
+      </div>
+    </div>
+
+    <div class="small" style="margin-bottom:8px">Timer (menit)</div>
+    <div class="chips" id="timerChips">
+      <span class="chip sel" data-m="0">Tanpa timer</span>
+      <span class="chip" data-m="5">5</span>
+      <span class="chip" data-m="10">10</span>
+      <span class="chip" data-m="15">15</span>
+      <span class="chip" data-m="30">30</span>
+      <span class="chip" data-m="60">60</span>
+      <span class="chip" data-m="custom">Atur sendiri</span>
+    </div>
+    <input id="customMin" type="number" min="1" max="600" placeholder="Isi menit, contoh 20" style="display:none;margin-bottom:12px">
+
+    <div class="row">
+      <button class="on" id="btnOn">NYALAKAN</button>
+      <button class="off" id="btnOff">MATIKAN</button>
+    </div>
+    <button class="full" id="btnPumpRefresh" style="margin-top:10px">Cek status pompa</button>
+  </div>
+
+  <div class="tanks">
+    <div class="tankbox">
+      <h3>Toren D7</h3>
+      <div class="tank"><div class="water" id="w7"></div></div>
+      <div class="pct" id="p7">--%</div>
+      <div class="liter" id="l7">-- liter</div>
+      <div class="upd" id="u7"></div>
+    </div>
+    <div class="tankbox">
+      <h3>Toren D8</h3>
+      <div class="tank"><div class="water" id="w8"></div></div>
+      <div class="pct" id="p8">--%</div>
+      <div class="liter" id="l8">-- liter</div>
+      <div class="upd" id="u8"></div>
+    </div>
+  </div>
+
+  <button class="primary full" id="btnCheck" style="margin-top:14px">CEK VOLUME TOREN</button>
+  <p class="small" style="text-align:center">Data tidak live. Tekan tombol cek untuk membaca sensor terbaru.</p>
+</section>
+
+<!-- ============ KALIBRASI ============ -->
+<section id="pg-cal" class="page">
+  <div class="card">
+    <h2>PILIH TOREN</h2>
+    <div class="chips" id="calTank">
+      <span class="chip sel" data-t="d7">Toren D7</span>
+      <span class="chip" data-t="d8">Toren D8</span>
+    </div>
+
+    <div class="kv"><span>Jarak sensor sekarang</span><b id="calNow">-- cm</b></div>
+    <div class="kv"><span>Titik KOSONG tersimpan</span><b id="calEmpty">-- cm</b></div>
+    <div class="kv"><span>Titik PENUH tersimpan</span><b id="calFull">-- cm</b></div>
+    <div class="kv"><span>Kapasitas</span><b id="calCap">-- liter</b></div>
+
+    <button class="primary full" id="btnRead" style="margin-top:14px">1. Baca sensor sekarang</button>
+    <div class="row" style="margin-top:10px">
+      <button id="btnSetEmpty">2a. Simpan sebagai KOSONG</button>
+      <button id="btnSetFull">2b. Simpan sebagai PENUH</button>
+    </div>
+    <p class="small">Cara: kosongkan toren, tekan Baca sensor, lalu Simpan sebagai KOSONG. Isi toren sampai penuh maksimal, tekan Baca sensor lagi, lalu Simpan sebagai PENUH.</p>
+  </div>
+
+  <div class="card">
+    <h2>KAPASITAS TOREN</h2>
+    <label for="capInput">Kapasitas toren terpilih (liter)</label>
+    <input id="capInput" type="number" min="1" placeholder="Contoh 1000">
+    <button class="full" id="btnSaveCap" style="margin-top:10px">Simpan kapasitas</button>
+  </div>
+</section>
+
+</main>
+
+<nav>
+  <button class="active" data-pg="home">Beranda</button>
+  <button data-pg="cal">Kalibrasi</button>
+</nav>
+
+<div id="gate" style="display:none">
+  <div class="gatebox">
+    <h2>Masukkan kode akses</h2>
+    <p class="small">Setiap pengguna punya kode sendiri. Cukup diisi sekali di setiap ponsel.</p>
+    <input id="gateInput" type="text" placeholder="Kode akses" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <div id="gateErr" class="small" style="color:var(--bad);min-height:18px;margin:6px 0"></div>
+    <button class="primary full" id="gateBtn">Masuk</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ==========================================================
+   PENGATURAN: isi alamat Firebase Realtime Database kamu di sini.
+   Contoh: "https://nama-proyek-default-rtdb.asia-southeast1.firebasedatabase.app"
+   Biarkan kosong untuk MODE DEMO (data palsu, hanya untuk lihat tampilan).
+   ========================================================== */
+const DB_URL = "https://kontrol-pompa-ad9b6-default-rtdb.asia-southeast1.firebasedatabase.app";
+
+/* Kode akses: diketik pengguna sekali di tiap ponsel, tidak ditulis di kode ini.
+   Kode dicocokkan ke database (folder "akses") dan hasilnya adalah nama folder
+   data rahasia (MASTER). Satu kode bisa dicabut dengan menghapusnya di Firebase. */
+let KUNCI = "";
+let MASTER = "";
+try{ KUNCI = localStorage.getItem("kunci") || ""; }catch(e){}
+const KUNCI_OK = k => /^[A-Za-z0-9_-]+$/.test(k);
+
+/* ---------- Penyimpanan data (Firebase REST atau demo) ---------- */
+const DEMO = !DB_URL;
+const DEFAULT_TANK = { jarak: null, n: 0, kosong: 100, penuh: 20, kapasitas: 1000 };
+
+async function dbGet(path){
+  if(DEMO) return demoGet(path);
+  const r = await fetch(`${DB_URL}/data/${MASTER}/${path}.json`, {cache:"no-store"});
+  if(!r.ok) throw new Error("Gagal membaca database");
+  return r.json();
+}
+async function dbPut(path, val){
+  if(DEMO) return demoPut(path, val);
+  const r = await fetch(`${DB_URL}/data/${MASTER}/${path}.json`, {method:"PUT", body: JSON.stringify(val)});
+  if(!r.ok) throw new Error("Gagal menulis database");
+  return r.json();
+}
+async function dbPatch(path, val){
+  if(DEMO) return demoPatch(path, val);
+  const r = await fetch(`${DB_URL}/data/${MASTER}/${path}.json`, {method:"PATCH", body: JSON.stringify(val)});
+  if(!r.ok) throw new Error("Gagal menulis database");
+  return r.json();
+}
+
+/* ---------- Simulasi (mode demo) ---------- */
+let demoDB;
+try{ demoDB = JSON.parse(localStorage.getItem("demoDB")||"null"); }catch(e){}
+if(!demoDB) demoDB = {
+  pompa:{ status:{state:"OFF", durasi:0, seq:0}, cmd:{} },
+  toren:{ d7:{...DEFAULT_TANK, jarak:55, n:1}, d8:{...DEFAULT_TANK, jarak:35, n:1} }
+};
+function demoSave(){ try{localStorage.setItem("demoDB", JSON.stringify(demoDB));}catch(e){} }
+function demoNode(path, create){
+  let o = demoDB;
+  for(const k of path.split("/").filter(Boolean)){
+    if(o[k]===undefined){ if(!create) return undefined; o[k]={}; }
+    o = o[k];
+  }
+  return o;
+}
+function demoGet(path){
+  if(path==="pompa/status"){
+    const s = demoDB.pompa.status;
+    if(s.state==="ON" && s.durasi>0 && s.seq && Date.now() > s.seq + s.durasi*1000){
+      s.state="OFF"; demoSave();   // timer tiruan habis
+    }
+  }
+  const v = demoNode(path); return Promise.resolve(v===undefined?null:JSON.parse(JSON.stringify(v)));
+}
+function demoPut(path, val){
+  const parts = path.split("/"); const last = parts.pop();
+  const parent = demoNode(parts.join("/"), true); parent[last]=val;
+  if(path==="pompa/cmd"){
+    const s = demoDB.pompa.status;
+    s.state = val.state; s.durasi = val.durasi||0; s.seq = val.seq;
+  }
+  const m = path.match(/^cek\/(d7|d8)$/);
+  if(m){ setTimeout(()=>{
+    const t = demoDB.toren[m[1]];
+    t.jarak = Math.round((25 + Math.random()*65)*10)/10; t.n++; demoSave();
+  }, 1200); }
+  demoSave(); return Promise.resolve(val);
+}
+function demoPatch(path, val){
+  const node = demoNode(path, true); Object.assign(node, val); demoSave(); return Promise.resolve(val);
+}
+
+/* ---------- Utilitas ---------- */
+const $ = id => document.getElementById(id);
+function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toast.t); toast.t=setTimeout(()=>t.classList.remove("show"),2600); }
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+function hitung(t){
+  if(!t || t.jarak==null) return null;
+  const kosong = Number(t.kosong), penuh = Number(t.penuh);
+  if(!(kosong>penuh)) return null;
+  let p = (kosong - t.jarak)/(kosong - penuh)*100;
+  p = Math.max(0, Math.min(100, p));
+  return { pct: p, liter: p/100*Number(t.kapasitas||0) };
+}
+function jam(){ return new Date().toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"}); }
+
+/* ---------- Tampilan toren ---------- */
+const tankData = { d7:null, d8:null };
+function renderTank(id){
+  const k = id.replace("d","");
+  const hasil = hitung(tankData[id]);
+  if(!hasil){ $("p"+k).textContent="--%"; $("l"+k).textContent="-- liter"; $("w"+k).style.height="0%"; return; }
+  $("p"+k).textContent = Math.round(hasil.pct)+"%";
+  $("l"+k).textContent = Math.round(hasil.liter)+" liter";
+  $("w"+k).style.height = hasil.pct+"%";
+}
+async function loadTank(id){
+  const d = await dbGet("toren/"+id);
+  tankData[id] = Object.assign({}, DEFAULT_TANK, d||{});
+  renderTank(id);
+}
+/* Minta ESP8266 membaca sensor, lalu tunggu angka baru masuk */
+async function cekToren(id){
+  const awal = (await dbGet(`toren/${id}/n`)) || 0;
+  await dbPut("cek/"+id, Date.now());
+  for(let i=0;i<20;i++){            // tunggu maksimal sekitar 30 detik
+    await sleep(1500);
+    const n = (await dbGet(`toren/${id}/n`)) || 0;
+    if(n!==awal){ await loadTank(id); return true; }
+  }
+  return false;
+}
+$("btnCheck").onclick = async ()=>{
+  const b=$("btnCheck"); b.disabled=true; b.textContent="Membaca sensor, tunggu maksimal 30 detik...";
+  try{
+    const [a,c] = await Promise.all([cekToren("d7"), cekToren("d8")]);
+    if(a) $("u7").textContent="Dicek "+jam(); else $("u7").textContent="Tidak ada respon";
+    if(c) $("u8").textContent="Dicek "+jam(); else $("u8").textContent="Tidak ada respon";
+    toast(a&&c ? "Pembacaan selesai" : "Alat tidak merespon, cek WiFi alat");
+  }catch(e){ toast("Gagal: "+e.message); }
+  b.disabled=false; b.textContent="CEK VOLUME TOREN";
+};
+
+/* ---------- Pompa ---------- */
+let timerPilih = 0;
+document.querySelectorAll("#timerChips .chip").forEach(c=>{
+  c.onclick=()=>{
+    document.querySelectorAll("#timerChips .chip").forEach(x=>x.classList.remove("sel"));
+    c.classList.add("sel");
+    if(c.dataset.m==="custom"){ $("customMin").style.display="block"; $("customMin").focus(); timerPilih="custom"; }
+    else { $("customMin").style.display="none"; timerPilih=Number(c.dataset.m); }
+  };
+});
+function menitTimer(){
+  if(timerPilih==="custom"){ const v=Number($("customMin").value); return v>0?Math.min(v,600):0; }
+  return timerPilih;
+}
+/* Status pompa dari alat: { state, durasi (detik), seq }.
+   seq adalah waktu perintah dikirim, jadi sisa timer bisa dihitung di aplikasi. */
+let pompaS = {state:"OFF", durasi:0, seq:0};
+function renderPompa(s){ pompaS = s || {state:"OFF", durasi:0, seq:0}; tampilPompa(); }
+function tampilPompa(){
+  const s = pompaS, on = s.state==="ON";
+  $("pumpDot").className = "dot"+(on?" on":"");
+  $("pumpText").textContent = on ? "MENYALA" : "MATI";
+  if(on && s.durasi>0 && s.seq){
+    const left = Math.round(s.durasi - (Date.now()-s.seq)/1000);
+    if(left>0){ const m=Math.floor(left/60), d=left%60; $("pumpSub").textContent = `Timer berjalan, sisa sekitar ${m} menit ${d} detik`; }
+    else $("pumpSub").textContent = "Timer seharusnya sudah selesai. Tekan Cek status pompa.";
+  } else if(on){ $("pumpSub").textContent = "Menyala tanpa timer"; }
+  else { $("pumpSub").textContent = "Pompa tidak aktif"; }
+}
+setInterval(()=>{ if(pompaS.state==="ON" && pompaS.durasi>0) tampilPompa(); }, 1000);
+async function loadPompa(){ renderPompa(await dbGet("pompa/status")); }
+async function kirimPompa(state){
+  const durasi = state==="ON" ? menitTimer()*60 : 0;
+  if(state==="ON" && timerPilih==="custom" && durasi===0){ toast("Isi menit timer dulu"); return; }
+  if(state==="ON" && durasi===0 && !confirm("Tanpa timer, pompa akan menyala terus sampai kamu matikan sendiri. Lanjutkan?")) return;
+  const seq = Date.now();
+  try{
+    await dbPut("pompa/cmd", { state, durasi, seq });
+    toast(state==="ON" ? (durasi? `Perintah nyala ${durasi/60} menit dikirim` : "Perintah nyala dikirim") : "Perintah mati dikirim");
+    // tunggu alat membalas, tandanya status membawa seq yang sama dengan perintah
+    for(let i=0;i<8;i++){ await sleep(1500); const s=await dbGet("pompa/status"); if(s && s.seq===seq){ renderPompa(s); return; } }
+    toast("Alat belum membalas, tekan Cek status pompa nanti");
+  }catch(e){ toast("Gagal: "+e.message); }
+}
+$("btnOn").onclick = ()=>kirimPompa("ON");
+$("btnOff").onclick = ()=>kirimPompa("OFF");
+$("btnPumpRefresh").onclick = async()=>{ try{ await loadPompa(); toast("Status diperbarui"); }catch(e){ toast("Gagal: "+e.message); } };
+
+/* ---------- Kalibrasi ---------- */
+let calT = "d7";
+function renderCal(){
+  const t = tankData[calT] || DEFAULT_TANK;
+  $("calNow").textContent = t.jarak==null ? "-- cm" : t.jarak+" cm";
+  $("calEmpty").textContent = t.kosong+" cm";
+  $("calFull").textContent = t.penuh+" cm";
+  $("calCap").textContent = t.kapasitas+" liter";
+  $("capInput").value = t.kapasitas;
+}
+document.querySelectorAll("#calTank .chip").forEach(c=>{
+  c.onclick=()=>{
+    document.querySelectorAll("#calTank .chip").forEach(x=>x.classList.remove("sel"));
+    c.classList.add("sel"); calT=c.dataset.t; renderCal();
+  };
+});
+$("btnRead").onclick = async()=>{
+  const b=$("btnRead"); b.disabled=true; b.textContent="Membaca sensor, tunggu maksimal 30 detik...";
+  try{ const ok=await cekToren(calT); toast(ok?"Pembacaan baru masuk":"Alat tidak merespon"); renderCal(); renderTank(calT); }
+  catch(e){ toast("Gagal: "+e.message); }
+  b.disabled=false; b.textContent="1. Baca sensor sekarang";
+};
+async function simpanTitik(jenis){
+  const t = tankData[calT];
+  if(!t || t.jarak==null){ toast("Baca sensor dulu"); return; }
+  const lawan = jenis==="kosong" ? t.penuh : t.kosong;
+  const kosong = jenis==="kosong" ? t.jarak : t.kosong;
+  const penuh  = jenis==="penuh"  ? t.jarak : t.penuh;
+  if(!(kosong>penuh)){ toast("Titik kosong harus lebih jauh dari titik penuh"); return; }
+  try{
+    await dbPatch("toren/"+calT, { [jenis]: t.jarak });
+    t[jenis]=t.jarak; renderCal(); renderTank(calT);
+    toast("Titik "+jenis.toUpperCase()+" tersimpan ("+t.jarak+" cm)");
+  }catch(e){ toast("Gagal: "+e.message); }
+}
+$("btnSetEmpty").onclick=()=>simpanTitik("kosong");
+$("btnSetFull").onclick=()=>simpanTitik("penuh");
+$("btnSaveCap").onclick=async()=>{
+  const v=Number($("capInput").value);
+  if(!(v>0)){ toast("Isi kapasitas dengan angka"); return; }
+  try{ await dbPatch("toren/"+calT,{kapasitas:v}); tankData[calT].kapasitas=v; renderCal(); renderTank(calT); toast("Kapasitas tersimpan"); }
+  catch(e){ toast("Gagal: "+e.message); }
+};
+
+/* ---------- Navigasi ---------- */
+document.querySelectorAll("nav button").forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+    $("pg-"+b.dataset.pg).classList.add("active");
+    if(b.dataset.pg==="cal") renderCal();
+  };
+});
+
+/* ---------- Mulai ---------- */
+function start(){
+  const mb=$("modeBadge");
+  mb.textContent = DEMO ? "MODE DEMO" : "Terhubung"; if(DEMO) mb.classList.add("demo");
+  if(!DEMO){
+    mb.title="Ketuk untuk mengganti kode akses"; mb.style.cursor="pointer";
+    mb.onclick=()=>{ if(confirm("Ganti kode akses?")){ try{localStorage.removeItem("kunci");}catch(e){} location.reload(); } };
+  }
+  Promise.all([loadTank("d7"), loadTank("d8"), loadPompa()]).catch(()=>toast("Tidak bisa membaca database"));
+}
+/* Tukar kode akses menjadi nama folder data. Gagal kalau kode tidak terdaftar. */
+async function masuk(k){
+  const r = await fetch(`${DB_URL}/akses/${k}.json`, {cache:"no-store"});
+  if(!r.ok) return false;
+  const m = await r.json();
+  if(typeof m!=="string" || !m) return false;
+  MASTER = m;
+  start();
+  return true;
+}
+if(DEMO){ start(); }
+else{
+  const tampilGate = msg => { $("gate").style.display="flex"; $("gateErr").textContent = msg||""; };
+  $("gateBtn").onclick = async ()=>{
+    const k = $("gateInput").value.trim();
+    if(!k || !KUNCI_OK(k)){ $("gateErr").textContent="Isi dengan huruf, angka, garis bawah atau strip."; return; }
+    $("gateBtn").disabled = true; $("gateErr").textContent = "Memeriksa...";
+    let ok = false;
+    try{ ok = await masuk(k); }catch(e){}
+    $("gateBtn").disabled = false;
+    if(ok){ try{localStorage.setItem("kunci",k);}catch(e){} KUNCI=k; $("gate").style.display="none"; }
+    else $("gateErr").textContent = "Kode salah, sudah dicabut, atau koneksi bermasalah.";
+  };
+  if(KUNCI){
+    masuk(KUNCI).then(ok=>{ if(!ok) tampilGate("Kode tidak berlaku atau tidak ada koneksi. Masukkan kode lagi."); })
+                .catch(()=>tampilGate("Tidak bisa terhubung. Periksa internet, lalu masukkan kode lagi."));
+  } else tampilGate("");
+}
+
+if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
+</script>
+</body>
+</html>

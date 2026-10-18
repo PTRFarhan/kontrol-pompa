@@ -1,0 +1,15 @@
+{
+  "name": "Kontrol Pompa",
+  "short_name": "Pompa",
+  "description": "Kontrol pompa dan monitor volume toren D7 dan D8",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b2233",
+  "theme_color": "#0b3a53",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
