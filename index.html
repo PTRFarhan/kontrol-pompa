@@ -66,6 +66,34 @@ nav button.active{color:var(--accent);font-weight:700}
 #toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#000c;color:#fff;
   padding:10px 16px;border-radius:99px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s;max-width:90%;text-align:center}
 #toast.show{opacity:1}
+.badge.ok{background:var(--ok);color:#052a14;font-weight:700}
+.badge.bad{background:var(--bad);color:#2a0606;font-weight:700}
+.badge.warn{background:var(--warn);color:#1b1200;font-weight:700}
+.dev{display:flex;align-items:center;gap:12px}
+.dot.ok{background:var(--ok);box-shadow:0 0 12px var(--ok)}
+.dot.bad{background:var(--bad);box-shadow:0 0 12px var(--bad)}
+.dev b{font-size:18px}
+.bars{display:inline-flex;align-items:flex-end;gap:3px;height:18px;vertical-align:middle;margin-right:6px}
+.bars i{width:5px;background:#3b6483;border-radius:2px;display:block}
+.bars i.f{background:var(--ok)}
+.bars.weak i.f{background:var(--warn)}
+.bars.vweak i.f{background:var(--bad)}
+.seg{display:flex;gap:6px;margin-bottom:12px}
+.seg button{flex:1;padding:10px 4px;font-size:14px;border-radius:12px}
+.seg button.sel{background:var(--accent);color:#04202f;font-weight:700}
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font-size:9px}
+.chart .bar{fill:#2fb4ff;cursor:pointer}
+.chart .bar.sel{fill:#7fd6ff}
+.chart .grid{stroke:rgba(255,255,255,.08);stroke-width:1}
+details.b{border-bottom:1px solid rgba(255,255,255,.06);padding:8px 0}
+details.b:last-child{border:0}
+details.b summary{cursor:pointer;display:flex;justify-content:space-between;gap:8px;font-size:14px;list-style:none}
+details.b summary::-webkit-details-marker{display:none}
+details.b summary b{text-align:right}
+.ses{font-size:13px;color:var(--muted);padding:6px 0 2px 10px;border-left:2px solid #2b5878;margin:6px 0 0 4px;line-height:1.5}
+.ses span{color:var(--text)}
+.empty{color:var(--muted);font-size:14px;text-align:center;padding:14px 0}
 </style>
 </head>
 <body>
@@ -79,6 +107,19 @@ nav button.active{color:var(--accent);font-weight:700}
 
 <!-- ============ BERANDA ============ -->
 <section id="pg-home" class="page active">
+
+  <div class="card">
+    <h2>ALAT (ESP8266)</h2>
+    <div class="dev">
+      <div id="devDot" class="dot"></div>
+      <div>
+        <b id="devText">Memeriksa...</b>
+        <div class="small" id="devSub">Menunggu data dari alat</div>
+      </div>
+    </div>
+    <div class="kv" style="margin-top:10px"><span>WiFi yang dipakai</span><b id="devWifi">--</b></div>
+    <div class="kv"><span>Kekuatan sinyal</span><span id="devSig">--</span></div>
+  </div>
 
   <div class="card">
     <h2>POMPA</h2>
@@ -106,7 +147,7 @@ nav button.active{color:var(--accent);font-weight:700}
       <button class="on" id="btnOn">NYALAKAN</button>
       <button class="off" id="btnOff">MATIKAN</button>
     </div>
-    <button class="full" id="btnPumpRefresh" style="margin-top:10px">Cek status pompa</button>
+    <p class="small" style="margin:10px 0 0">Status pompa tampil langsung. Tombol di alat dan perintah dari aplikasi sama-sama terlihat di sini.</p>
   </div>
 
   <div class="tanks">
@@ -127,7 +168,33 @@ nav button.active{color:var(--accent);font-weight:700}
   </div>
 
   <button class="primary full" id="btnCheck" style="margin-top:14px">CEK VOLUME TOREN</button>
-  <p class="small" style="text-align:center">Data tidak live. Tekan tombol cek untuk membaca sensor terbaru.</p>
+  <p class="small" style="text-align:center">Angka toren berubah otomatis. Hanya pembacaan sensor yang berhasil yang ditampilkan, jadi angka lama tetap tampil sampai ada angka baru. Tombol cek memaksa pembacaan sekarang.</p>
+</section>
+
+<!-- ============ RIWAYAT ============ -->
+<section id="pg-hist" class="page">
+  <div class="card">
+    <h2>RINGKASAN WAKTU POMPA MENYALA</h2>
+    <div id="sumList"><div class="empty">Memuat...</div></div>
+  </div>
+
+  <div class="card">
+    <h2>GRAFIK LAMA NYALA</h2>
+    <div class="seg" id="grpSeg">
+      <button data-g="hari" class="sel">Harian</button>
+      <button data-g="minggu">Mingguan</button>
+      <button data-g="bulan">Bulanan</button>
+      <button data-g="tahun">Tahunan</button>
+    </div>
+    <div id="chartBox"></div>
+    <div class="small" id="chartNote" style="margin-top:6px"></div>
+  </div>
+
+  <div class="card">
+    <h2>DAFTAR NYALA DAN MATI</h2>
+    <div id="histList"><div class="empty">Memuat...</div></div>
+    <button class="full" id="btnHistRefresh" style="margin-top:12px">Muat ulang riwayat</button>
+  </div>
 </section>
 
 <!-- ============ KALIBRASI ============ -->
@@ -158,12 +225,18 @@ nav button.active{color:var(--accent);font-weight:700}
     <input id="capInput" type="number" min="1" placeholder="Contoh 1000">
     <button class="full" id="btnSaveCap" style="margin-top:10px">Simpan kapasitas</button>
   </div>
+
+  <div class="card">
+    <h2>AKUN</h2>
+    <button class="full" id="btnChangeKey">Ganti kode akses</button>
+  </div>
 </section>
 
 </main>
 
 <nav>
   <button class="active" data-pg="home">Beranda</button>
+  <button data-pg="hist">Riwayat</button>
   <button data-pg="cal">Kalibrasi</button>
 </nav>
 
@@ -223,7 +296,8 @@ let demoDB;
 try{ demoDB = JSON.parse(localStorage.getItem("demoDB")||"null"); }catch(e){}
 if(!demoDB) demoDB = {
   pompa:{ status:{state:"OFF", durasi:0, seq:0}, cmd:{} },
-  toren:{ d7:{...DEFAULT_TANK, jarak:55, n:1}, d8:{...DEFAULT_TANK, jarak:35, n:1} }
+  toren:{ d7:{...DEFAULT_TANK, jarak:55, n:1}, d8:{...DEFAULT_TANK, jarak:35, n:1} },
+  perangkat:{ ssid:"Wifi Demo", rssi:-58, ts:0 }
 };
 function demoSave(){ try{localStorage.setItem("demoDB", JSON.stringify(demoDB));}catch(e){} }
 function demoNode(path, create){
@@ -235,6 +309,7 @@ function demoNode(path, create){
   return o;
 }
 function demoGet(path){
+  if(path==="perangkat") demoDB.perangkat.ts = Date.now();
   if(path==="pompa/status"){
     const s = demoDB.pompa.status;
     if(s.state==="ON" && s.durasi>0 && s.seq && Date.now() > s.seq + s.durasi*1000){
@@ -266,7 +341,7 @@ const $ = id => document.getElementById(id);
 function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toast.t); toast.t=setTimeout(()=>t.classList.remove("show"),2600); }
 const sleep = ms => new Promise(r=>setTimeout(r,ms));
 function hitung(t){
-  if(!t || t.jarak==null) return null;
+  if(!t || !(t.jarak>0)) return null;
   const kosong = Number(t.kosong), penuh = Number(t.penuh);
   if(!(kosong>penuh)) return null;
   let p = (kosong - t.jarak)/(kosong - penuh)*100;
@@ -275,29 +350,74 @@ function hitung(t){
 }
 function jam(){ return new Date().toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"}); }
 
+/* ---------- Aliran data realtime dari Firebase (Server-Sent Events) ---------- */
+let netLast = 0;                       // kapan terakhir ada kabar dari Firebase (termasuk keep-alive)
+const streams = [];
+function streamSet(cache, path, data, merge){
+  if(path==="/"){
+    if(merge && cache && typeof cache==="object" && data && typeof data==="object") return Object.assign(cache, data);
+    return data;
+  }
+  const parts = path.split("/").filter(Boolean);
+  if(cache===null || typeof cache!=="object") cache = {};
+  let o = cache;
+  for(let i=0;i<parts.length-1;i++){
+    if(o[parts[i]]===null || typeof o[parts[i]]!=="object") o[parts[i]] = {};
+    o = o[parts[i]];
+  }
+  const k = parts[parts.length-1];
+  if(merge && o[k] && typeof o[k]==="object" && data && typeof data==="object") Object.assign(o[k], data);
+  else if(data===null) delete o[k];
+  else o[k] = data;
+  return cache;
+}
+function stream(path, cb){
+  if(DEMO){ const f=async()=>cb(await demoGet(path)); f(); setInterval(f,1500); return; }
+  const st = { cache:null, es:null, timer:0 };
+  const open = ()=>{
+    if(st.es) st.es.close();
+    st.cache = null;
+    const es = new EventSource(`${DB_URL}/data/${MASTER}/${path}.json`);
+    st.es = es;
+    const upd = (ev, merge)=>{
+      netLast = Date.now();
+      try{ const m = JSON.parse(ev.data); st.cache = streamSet(st.cache, m.path, m.data, merge); cb(st.cache); }catch(e){}
+    };
+    es.addEventListener("put",   ev=>upd(ev,false));
+    es.addEventListener("patch", ev=>upd(ev,true));
+    es.addEventListener("keep-alive", ()=>{ netLast = Date.now(); });
+    es.onerror = ()=>{ if(es.readyState===2){ clearTimeout(st.timer); st.timer = setTimeout(open, 3000); } };
+  };
+  st.open = open; streams.push(st); open();
+}
+document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) streams.forEach(s=>s.open()); });
+
 /* ---------- Tampilan toren ---------- */
 const tankData = { d7:null, d8:null };
 function renderTank(id){
   const k = id.replace("d","");
-  const hasil = hitung(tankData[id]);
-  if(!hasil){ $("p"+k).textContent="--%"; $("l"+k).textContent="-- liter"; $("w"+k).style.height="0%"; return; }
+  const t = tankData[id];
+  const hasil = (t && t.jarak>0) ? hitung(t) : null;
+  if(!hasil){ $("p"+k).textContent="--%"; $("l"+k).textContent="-- liter"; $("w"+k).style.height="0%"; $("u"+k).textContent="Belum ada pembacaan"; return; }
   $("p"+k).textContent = Math.round(hasil.pct)+"%";
   $("l"+k).textContent = Math.round(hasil.liter)+" liter";
   $("w"+k).style.height = hasil.pct+"%";
+  $("u"+k).textContent = t.t ? "Diperbarui "+new Date(t.t).toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit",second:"2-digit"}) : "";
 }
-async function loadTank(id){
-  const d = await dbGet("toren/"+id);
-  tankData[id] = Object.assign({}, DEFAULT_TANK, d||{});
-  renderTank(id);
+function onToren(v){
+  for(const id of ["d7","d8"]){
+    const d = v && v[id];
+    if(d){ tankData[id] = Object.assign({}, DEFAULT_TANK, d); renderTank(id); }
+  }
+  if($("pg-cal").classList.contains("active")) renderCal();
 }
 /* Minta ESP8266 membaca sensor, lalu tunggu angka baru masuk */
 async function cekToren(id){
-  const awal = (await dbGet(`toren/${id}/n`)) || 0;
+  const awal = (tankData[id] && tankData[id].n) || 0;
   await dbPut("cek/"+id, Date.now());
   for(let i=0;i<20;i++){            // tunggu maksimal sekitar 30 detik
     await sleep(1500);
-    const n = (await dbGet(`toren/${id}/n`)) || 0;
-    if(n!==awal){ await loadTank(id); return true; }
+    if(((tankData[id] && tankData[id].n) || 0) !== awal) return true;
   }
   return false;
 }
@@ -305,12 +425,61 @@ $("btnCheck").onclick = async ()=>{
   const b=$("btnCheck"); b.disabled=true; b.textContent="Membaca sensor, tunggu maksimal 30 detik...";
   try{
     const [a,c] = await Promise.all([cekToren("d7"), cekToren("d8")]);
-    if(a) $("u7").textContent="Dicek "+jam(); else $("u7").textContent="Tidak ada respon";
-    if(c) $("u8").textContent="Dicek "+jam(); else $("u8").textContent="Tidak ada respon";
-    toast(a&&c ? "Pembacaan selesai" : "Alat tidak merespon, cek WiFi alat");
+    toast(a&&c ? "Pembacaan selesai" : "Ada sensor yang belum merespon");
   }catch(e){ toast("Gagal: "+e.message); }
   b.disabled=false; b.textContent="CEK VOLUME TOREN";
 };
+
+/* ---------- Status alat: terhubung atau terputus ---------- */
+const BEAT_TIMEOUT = 35000;            // alat melapor tiap 10 detik, 35 detik tanpa kabar dianggap terputus
+let dev = null, lastBeatTs = null, lastBeatLocal = 0, devOnline = false;
+function onPerangkat(v){
+  dev = v;
+  if(v && v.ts){
+    if(lastBeatTs===null) lastBeatLocal = Date.now() - Math.max(0, Date.now() - v.ts);   // pertama kali: umur dari jam server
+    else if(v.ts !== lastBeatTs) lastBeatLocal = Date.now();
+    lastBeatTs = v.ts;
+  }
+  renderDev();
+}
+function sinyal(rssi){
+  if(rssi>=-60) return {n:4, label:"Sangat kuat", cls:""};
+  if(rssi>=-70) return {n:3, label:"Kuat", cls:""};
+  if(rssi>=-80) return {n:2, label:"Sedang", cls:"weak"};
+  return {n:1, label:"Lemah", cls:"vweak"};
+}
+function agoText(ms){
+  const s = Math.round(ms/1000);
+  if(s<60) return s+" detik lalu";
+  if(s<3600) return Math.floor(s/60)+" menit lalu";
+  if(s<86400) return Math.floor(s/3600)+" jam lalu";
+  return Math.floor(s/86400)+" hari lalu";
+}
+function renderDev(){
+  const phoneOff = !navigator.onLine || (netLast && Date.now()-netLast > 70000);
+  const hasBeat = !!(dev && dev.ts);
+  devOnline = hasBeat && !phoneOff && (Date.now() - lastBeatLocal) < BEAT_TIMEOUT;
+  const mb = $("modeBadge");
+  if(DEMO){ mb.textContent="MODE DEMO"; mb.className="badge demo"; }
+  else if(phoneOff){ mb.textContent="Ponsel offline"; mb.className="badge warn"; }
+  else if(!hasBeat){ mb.textContent="Menunggu alat"; mb.className="badge"; }
+  else if(devOnline){ mb.textContent="Alat terhubung"; mb.className="badge ok"; }
+  else { mb.textContent="Alat terputus"; mb.className="badge bad"; }
+  $("devDot").className = "dot "+(devOnline?"ok":(hasBeat?"bad":""));
+  if(phoneOff){ $("devText").textContent="Ponsel tidak ada internet"; $("devSub").textContent="Status alat tidak bisa diperbarui"; }
+  else if(!hasBeat){ $("devText").textContent="Belum ada kabar dari alat"; $("devSub").textContent="Pastikan alat menyala dan tersambung WiFi"; }
+  else if(devOnline){ $("devText").textContent="TERHUBUNG"; $("devSub").textContent="Alat tersambung ke internet"; }
+  else { $("devText").textContent="TERPUTUS"; $("devSub").textContent="Alat tidak tersambung ke internet. Terakhir terlihat "+agoText(Date.now()-lastBeatLocal); }
+  if(dev && dev.ssid){
+    $("devWifi").textContent = dev.ssid;
+    const g = sinyal(Number(dev.rssi));
+    let bars=""; for(let i=1;i<=4;i++) bars += `<i class="${i<=g.n?"f":""}" style="height:${4+i*4}px"></i>`;
+    $("devSig").innerHTML = `<span class="bars ${g.cls}">${bars}</span>${g.label} (${dev.rssi} dBm)`;
+  } else { $("devWifi").textContent="--"; $("devSig").textContent="--"; }
+  if(!devOnline && hasBeat){ $("devWifi").style.opacity=.5; $("devSig").style.opacity=.5; } else { $("devWifi").style.opacity=1; $("devSig").style.opacity=1; }
+}
+setInterval(renderDev, 3000);
+window.addEventListener("online", renderDev); window.addEventListener("offline", renderDev);
 
 /* ---------- Pompa ---------- */
 let timerPilih = 0;
@@ -326,39 +495,180 @@ function menitTimer(){
   if(timerPilih==="custom"){ const v=Number($("customMin").value); return v>0?Math.min(v,600):0; }
   return timerPilih;
 }
-/* Status pompa dari alat: { state, durasi (detik), seq }.
-   seq adalah waktu perintah dikirim, jadi sisa timer bisa dihitung di aplikasi. */
-let pompaS = {state:"OFF", durasi:0, seq:0};
-function renderPompa(s){ pompaS = s || {state:"OFF", durasi:0, seq:0}; tampilPompa(); }
+/* Status pompa dari alat: { state, durasi (detik), seq, sumber }.
+   seq adalah waktu pompa mulai menyala (ms), jadi sisa timer bisa dihitung di aplikasi. */
+let pompaS = {state:"OFF", durasi:0, seq:0, sumber:"-"};
+let pendingSeq = 0, pompaPertama = true;
+function renderPompa(s){ pompaS = s || {state:"OFF", durasi:0, seq:0, sumber:"-"}; tampilPompa(); }
 function tampilPompa(){
   const s = pompaS, on = s.state==="ON";
+  const dari = s.sumber==="MANUAL" ? "tombol manual" : (s.sumber==="APP" ? "aplikasi" : "");
   $("pumpDot").className = "dot"+(on?" on":"");
   $("pumpText").textContent = on ? "MENYALA" : "MATI";
   if(on && s.durasi>0 && s.seq){
     const left = Math.round(s.durasi - (Date.now()-s.seq)/1000);
-    if(left>0){ const m=Math.floor(left/60), d=left%60; $("pumpSub").textContent = `Timer berjalan, sisa sekitar ${m} menit ${d} detik`; }
-    else $("pumpSub").textContent = "Timer seharusnya sudah selesai. Tekan Cek status pompa.";
-  } else if(on){ $("pumpSub").textContent = "Menyala tanpa timer"; }
+    if(left>0){ const m=Math.floor(left/60), d=left%60; $("pumpSub").textContent = `Dari ${dari}. Sisa ${m} menit ${d} detik`; }
+    else $("pumpSub").textContent = "Timer hampir selesai";
+  } else if(on){ $("pumpSub").textContent = "Dari "+dari+". Menyala tanpa timer"; }
   else { $("pumpSub").textContent = "Pompa tidak aktif"; }
 }
 setInterval(()=>{ if(pompaS.state==="ON" && pompaS.durasi>0) tampilPompa(); }, 1000);
-async function loadPompa(){ renderPompa(await dbGet("pompa/status")); }
+function onPompa(v){
+  const prev = pompaS;
+  renderPompa(v);
+  const s = pompaS;
+  if(pompaPertama){ pompaPertama = false; return; }
+  if(pendingSeq && s.seq===pendingSeq){
+    pendingSeq = 0; toast(s.state==="ON" ? "Pompa menyala" : "Pompa mati");
+  } else if(prev.state!==s.state){
+    toast((s.state==="ON" ? "Pompa menyala" : "Pompa mati")+(s.sumber==="MANUAL" ? " (tombol manual)" : ""));
+  }
+  if(prev.state==="ON" && s.state==="OFF"){ histDirty = true; if($("pg-hist").classList.contains("active")) setTimeout(loadHist, 4000); }
+  if(prev.state!=="ON" && s.state==="ON" && $("pg-hist").classList.contains("active")) renderHist();
+}
 async function kirimPompa(state){
   const durasi = state==="ON" ? menitTimer()*60 : 0;
   if(state==="ON" && timerPilih==="custom" && durasi===0){ toast("Isi menit timer dulu"); return; }
   if(state==="ON" && durasi===0 && !confirm("Tanpa timer, pompa akan menyala terus sampai kamu matikan sendiri. Lanjutkan?")) return;
   const seq = Date.now();
   try{
+    pendingSeq = seq;
     await dbPut("pompa/cmd", { state, durasi, seq });
-    toast(state==="ON" ? (durasi? `Perintah nyala ${durasi/60} menit dikirim` : "Perintah nyala dikirim") : "Perintah mati dikirim");
-    // tunggu alat membalas, tandanya status membawa seq yang sama dengan perintah
-    for(let i=0;i<8;i++){ await sleep(1500); const s=await dbGet("pompa/status"); if(s && s.seq===seq){ renderPompa(s); return; } }
-    toast("Alat belum membalas, tekan Cek status pompa nanti");
-  }catch(e){ toast("Gagal: "+e.message); }
+    toast(devOnline ? "Perintah dikirim" : "Perintah dikirim, tapi alat sedang terputus");
+    setTimeout(()=>{ if(pendingSeq===seq){ pendingSeq=0; toast(devOnline ? "Alat belum membalas" : "Alat terputus, perintah belum dijalankan"); } }, 9000);
+  }catch(e){ pendingSeq=0; toast("Gagal: "+e.message); }
 }
 $("btnOn").onclick = ()=>kirimPompa("ON");
 $("btnOff").onclick = ()=>kirimPompa("OFF");
-$("btnPumpRefresh").onclick = async()=>{ try{ await loadPompa(); toast("Status diperbarui"); }catch(e){ toast("Gagal: "+e.message); } };
+
+/* ---------- Riwayat ---------- */
+let histData = [], histDirty = true, histGroup = "hari", histSel = null, histLoaded = false;
+const BLN = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+const HARI = ["Min","Sen","Sel","Rab","Kam","Jum","Sab"];
+const p2 = n => String(n).padStart(2,"0");
+function fmtDur(sec){
+  sec = Math.round(sec);
+  if(sec<60) return sec+" dtk";
+  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), d = sec%60;
+  if(h>0) return `${h} j ${m} mnt`;
+  return d ? `${m} mnt ${d} dtk` : `${m} mnt`;
+}
+function fmtJam(ts){ const d=new Date(ts*1000); return `${p2(d.getHours())}:${p2(d.getMinutes())}`; }
+function fmtTgl(ts){ const d=new Date(ts*1000); return `${HARI[d.getDay()]}, ${d.getDate()} ${BLN[d.getMonth()]} ${d.getFullYear()}`; }
+const ALASAN = { TIMER:"Timer selesai", MANUAL:"Dimatikan dari tombol", APP:"Dimatikan dari aplikasi", BATAS:"Batas aman 4 jam", GANTI:"Diganti perintah baru", BERJALAN:"Masih menyala" };
+function startOfDay(d){ const x=new Date(d); x.setHours(0,0,0,0); return x; }
+function startOfWeek(d){ const x=startOfDay(d); x.setDate(x.getDate()-((x.getDay()+6)%7)); return x; }   // Senin
+function startOfMonth(d){ const x=startOfDay(d); x.setDate(1); return x; }
+function startOfYear(d){ const x=startOfDay(d); x.setMonth(0,1); return x; }
+
+async function fetchHist(){
+  if(DEMO) return [];
+  const url = `${DB_URL}/data/${MASTER}_riwayat.json?orderBy=%22%24key%22&limitToLast=3000`;
+  const r = await fetch(url, {cache:"no-store"});
+  if(!r.ok) throw new Error("Gagal membaca riwayat");
+  const o = await r.json();
+  return Object.values(o||{}).filter(x=>x && x.mulai>0 && x.selesai>=x.mulai).sort((a,b)=>a.mulai-b.mulai);
+}
+async function loadHist(){
+  try{ histData = await fetchHist(); histLoaded = true; histDirty = false; renderHist(); }
+  catch(e){ $("histList").innerHTML = `<div class="empty">${e.message}. Periksa internet atau aturan database.</div>`; }
+}
+function semuaSesi(){          // riwayat tersimpan ditambah sesi yang sedang berjalan
+  const a = histData.slice();
+  if(pompaS.state==="ON" && pompaS.seq>0){
+    const now = Date.now()/1000, mulai = pompaS.seq/1000;
+    if(mulai<=now) a.push({mulai, selesai:now, detik:now-mulai, sumber:pompaS.sumber, alasan:"BERJALAN", live:true});
+  }
+  return a;
+}
+function totalDari(sesi, dariDate){
+  const t0 = dariDate.getTime()/1000; let sum=0, n=0;
+  for(const x of sesi) if(x.mulai>=t0){ sum+=x.detik; n++; }
+  return {sum, n};
+}
+function renderSummary(sesi){
+  const now = new Date();
+  const d1 = startOfDay(now);
+  const d7 = startOfDay(now); d7.setDate(d7.getDate()-6);
+  const d30 = startOfDay(now); d30.setDate(d30.getDate()-29);
+  const rows = [
+    ["Hari ini", totalDari(sesi,d1)],
+    ["7 hari terakhir", totalDari(sesi,d7)],
+    ["30 hari terakhir", totalDari(sesi,d30)],
+    ["Bulan ini", totalDari(sesi,startOfMonth(now))],
+    ["Tahun ini", totalDari(sesi,startOfYear(now))],
+  ];
+  let h = "";
+  for(const [lbl,r] of rows) h += `<div class="kv"><span>${lbl}</span><b>${r.n? fmtDur(r.sum)+" · "+r.n+"x" : "tidak menyala"}</b></div>`;
+  const w = rows[1][1];
+  if(w.n) h += `<div class="small" style="margin-top:8px">Dalam 7 hari terakhir pompa menyala ${w.n} kali, total ${fmtDur(w.sum)}, rata-rata ${fmtDur(w.sum/w.n)} sekali nyala.</div>`;
+  $("sumList").innerHTML = h;
+}
+function buatBucket(sesi){
+  const now = new Date(), out = [];
+  const g = histGroup;
+  let n, mk, label, short, next;
+  if(g==="hari"){ n=14; const s0=startOfDay(now); for(let i=n-1;i>=0;i--){ const d=new Date(s0); d.setDate(d.getDate()-i); out.push({d, to:new Date(d.getFullYear(),d.getMonth(),d.getDate()+1), label:`${HARI[d.getDay()]}, ${d.getDate()} ${BLN[d.getMonth()]}`, short:String(d.getDate())}); } }
+  else if(g==="minggu"){ n=12; const s0=startOfWeek(now); for(let i=n-1;i>=0;i--){ const d=new Date(s0); d.setDate(d.getDate()-7*i); const e=new Date(d); e.setDate(e.getDate()+7); const l=new Date(e); l.setDate(l.getDate()-1); out.push({d, to:e, label:`${d.getDate()} ${BLN[d.getMonth()]} sampai ${l.getDate()} ${BLN[l.getMonth()]}`, short:`${d.getDate()}/${d.getMonth()+1}`}); } }
+  else if(g==="bulan"){ n=12; const s0=startOfMonth(now); for(let i=n-1;i>=0;i--){ const d=new Date(s0.getFullYear(), s0.getMonth()-i, 1); out.push({d, to:new Date(d.getFullYear(),d.getMonth()+1,1), label:`${BLN[d.getMonth()]} ${d.getFullYear()}`, short:BLN[d.getMonth()]}); } }
+  else { const y1=now.getFullYear(); const y0=Math.min(y1-2, sesi.length? new Date(sesi[0].mulai*1000).getFullYear() : y1); for(let y=y0;y<=y1;y++) out.push({d:new Date(y,0,1), to:new Date(y+1,0,1), label:String(y), short:String(y)}); }
+  for(const b of out){ b.sum=0; b.n=0; b.sesi=[]; }
+  for(const x of sesi){
+    const t = x.mulai*1000;
+    for(const b of out) if(t>=b.d.getTime() && t<b.to.getTime()){ b.sum+=x.detik; b.n++; b.sesi.push(x); break; }
+  }
+  return out;
+}
+function renderChart(bs){
+  const W=320,H=170,L=34,R=6,T=14,B=26, pw=W-L-R, ph=H-T-B;
+  const maxSec = Math.max(60, ...bs.map(b=>b.sum));
+  const unitJam = maxSec>=2*3600, div = unitJam?3600:60, unit = unitJam?"j":"mnt";
+  let top = maxSec/div; const step = Math.pow(10, Math.floor(Math.log10(top))); top = Math.ceil(top/step)*step;
+  let svg = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Grafik lama pompa menyala">`;
+  for(let i=0;i<=3;i++){
+    const y = T+ph-(ph*i/3), v = top*i/3;
+    svg += `<line class="grid" x1="${L}" x2="${W-R}" y1="${y}" y2="${y}"/><text x="${L-4}" y="${y+3}" text-anchor="end">${Math.round(v*10)/10}${i===3?" "+unit:""}</text>`;
+  }
+  const bw = pw/bs.length;
+  bs.forEach((b,i)=>{
+    const h = top>0 ? ph*(b.sum/div)/top : 0, x = L+i*bw+bw*0.15, w = bw*0.7, y = T+ph-h;
+    svg += `<rect class="bar${histSel===i?" sel":""}" data-i="${i}" x="${x}" y="${b.sum>0?y:T+ph-1}" width="${w}" height="${b.sum>0?h:1}" rx="2"><title>${b.label}: ${fmtDur(b.sum)}</title></rect>`;
+    const skip = bs.length>12 && i%2===1;
+    if(!skip) svg += `<text x="${x+w/2}" y="${H-10}" text-anchor="middle">${b.short}</text>`;
+  });
+  svg += "</svg>";
+  $("chartBox").innerHTML = svg;
+  $("chartBox").querySelectorAll(".bar").forEach(r=>{ r.onclick=()=>{ histSel = Number(r.dataset.i); renderHist(true); }; });
+}
+function renderList(bs){
+  const rows = bs.slice().reverse().filter(b=>b.n>0);
+  if(!rows.length){ $("histList").innerHTML = `<div class="empty">${histLoaded? "Belum ada riwayat pompa menyala di periode ini." : "Memuat..."}</div>`; return; }
+  let h = "";
+  for(const b of rows){
+    const idx = bs.indexOf(b);
+    h += `<details class="b" ${histSel===idx?"open":""}><summary><span>${b.label}</span><b>${fmtDur(b.sum)} · ${b.n}x</b></summary>`;
+    for(const x of b.sesi.slice().reverse()){
+      const tglBeda = new Date(x.mulai*1000).toDateString() !== new Date(x.selesai*1000).toDateString();
+      h += `<div class="ses">Nyala <span>${fmtJam(x.mulai)}</span> sampai ${x.live? "<span>sekarang</span>" : "mati <span>"+fmtJam(x.selesai)+(tglBeda?" ("+new Date(x.selesai*1000).getDate()+" "+BLN[new Date(x.selesai*1000).getMonth()]+")":"")+"</span>"}<br>Lama <span>${fmtDur(x.detik)}</span> · ${x.sumber==="MANUAL"?"dari tombol":"dari aplikasi"} · ${ALASAN[x.alasan]||x.alasan}</div>`;
+    }
+    h += `</details>`;
+  }
+  $("histList").innerHTML = h;
+}
+function renderHist(keepSel){
+  const sesi = semuaSesi();
+  renderSummary(sesi);
+  const bs = buatBucket(sesi);
+  if(!keepSel) histSel = null;
+  renderChart(bs); renderList(bs);
+  const tot = bs.reduce((a,b)=>a+b.sum,0);
+  $("chartNote").textContent = `Total pada grafik: ${fmtDur(tot)}. Ketuk batang untuk melihat rinciannya. ${histGroup==="hari"?"Menampilkan 14 hari terakhir.":histGroup==="minggu"?"Menampilkan 12 minggu terakhir (minggu mulai Senin).":histGroup==="bulan"?"Menampilkan 12 bulan terakhir.":"Menampilkan per tahun."}`;
+}
+document.querySelectorAll("#grpSeg button").forEach(b=>{
+  b.onclick=()=>{ document.querySelectorAll("#grpSeg button").forEach(x=>x.classList.remove("sel")); b.classList.add("sel"); histGroup=b.dataset.g; histSel=null; renderHist(); };
+});
+$("btnHistRefresh").onclick = async()=>{ await loadHist(); toast("Riwayat dimuat ulang"); };
+setInterval(()=>{ if(pompaS.state==="ON" && $("pg-hist").classList.contains("active")) renderHist(true); }, 30000);
 
 /* ---------- Kalibrasi ---------- */
 let calT = "d7";
@@ -412,18 +722,18 @@ document.querySelectorAll("nav button").forEach(b=>{
     document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
     $("pg-"+b.dataset.pg).classList.add("active");
     if(b.dataset.pg==="cal") renderCal();
+    if(b.dataset.pg==="hist"){ renderHist(); if(histDirty) loadHist(); }
   };
 });
 
 /* ---------- Mulai ---------- */
 function start(){
-  const mb=$("modeBadge");
-  mb.textContent = DEMO ? "MODE DEMO" : "Terhubung"; if(DEMO) mb.classList.add("demo");
-  if(!DEMO){
-    mb.title="Ketuk untuk mengganti kode akses"; mb.style.cursor="pointer";
-    mb.onclick=()=>{ if(confirm("Ganti kode akses?")){ try{localStorage.removeItem("kunci");}catch(e){} location.reload(); } };
-  }
-  Promise.all([loadTank("d7"), loadTank("d8"), loadPompa()]).catch(()=>toast("Tidak bisa membaca database"));
+  renderDev();
+  $("btnChangeKey").onclick=()=>{ if(confirm("Ganti kode akses?")){ try{localStorage.removeItem("kunci");}catch(e){} location.reload(); } };
+  stream("toren", onToren);
+  stream("pompa/status", onPompa);
+  stream("perangkat", onPerangkat);
+  loadHist();
 }
 /* Tukar kode akses menjadi nama folder data. Gagal kalau kode tidak terdaftar. */
 async function masuk(k){
