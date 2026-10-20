@@ -1,0 +1,256 @@
+{
+  "version": 1,
+  "author": "kontrol-pompa",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-lcd1602",
+      "id": "lcd",
+      "top": -160,
+      "left": 20,
+      "attrs": {
+        "pins": "i2c"
+      }
+    },
+    {
+      "type": "wokwi-hc-sr04",
+      "id": "sonarA",
+      "top": -150,
+      "left": 260,
+      "attrs": {
+        "distance": "55"
+      }
+    },
+    {
+      "type": "wokwi-hc-sr04",
+      "id": "sonarB",
+      "top": 20,
+      "left": 260,
+      "attrs": {
+        "distance": "35"
+      }
+    },
+    {
+      "type": "wokwi-slide-switch",
+      "id": "btn",
+      "top": 200,
+      "left": -120,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-relay-module",
+      "id": "relay",
+      "top": 230,
+      "left": 140,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ledPompa",
+      "top": 300,
+      "left": 300,
+      "attrs": {
+        "color": "blue"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 340,
+      "left": 240,
+      "attrs": {
+        "value": "330"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "esp:TX",
+      "$serialMonitor:RX",
+      "",
+      []
+    ],
+    [
+      "esp:RX",
+      "$serialMonitor:TX",
+      "",
+      []
+    ],
+    [
+      "lcd:GND",
+      "esp:GND.2",
+      "black",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "lcd:VCC",
+      "esp:5V",
+      "red",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "lcd:SDA",
+      "esp:21",
+      "green",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "lcd:SCL",
+      "esp:22",
+      "purple",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "sonarA:VCC",
+      "esp:5V",
+      "red",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "sonarA:GND",
+      "esp:GND.2",
+      "black",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "sonarA:TRIG",
+      "esp:5",
+      "orange",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "sonarA:ECHO",
+      "esp:18",
+      "yellow",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "sonarB:VCC",
+      "esp:5V",
+      "red",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "sonarB:GND",
+      "esp:GND.2",
+      "black",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "sonarB:TRIG",
+      "esp:19",
+      "orange",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "sonarB:ECHO",
+      "esp:23",
+      "yellow",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "relay:VCC",
+      "esp:5V",
+      "red",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "relay:GND",
+      "esp:GND.1",
+      "black",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "relay:IN",
+      "esp:2",
+      "blue",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "relay:COM",
+      "esp:3V3",
+      "red",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "relay:NO",
+      "r1:1",
+      "red",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "r1:2",
+      "ledPompa:A",
+      "red",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "ledPompa:C",
+      "esp:GND.1",
+      "black",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "btn:2",
+      "esp:4",
+      "green",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "btn:1",
+      "esp:GND.1",
+      "black",
+      [
+        "h0"
+      ]
+    ]
+  ],
+  "dependencies": {}
+}

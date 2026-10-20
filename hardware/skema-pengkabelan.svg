@@ -1,0 +1,145 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 780" width="1100" height="780" font-family="Segoe UI,Arial,sans-serif">
+<rect width="1100" height="780" fill="#ffffff"/>
+<text x="550" y="34" text-anchor="middle" font-size="22" font-weight="700" fill="#0b2233">Skema pengkabelan: kontrol pompa dan 2 toren (NodeMCU ESP8266)</text>
+<text x="550" y="56" text-anchor="middle" font-size="12" fill="#555">Gambar skematik, bukan susunan fisik pin. Label 5V, 3V3, dan GND berarti disambung ke pin bernama sama di NodeMCU.</text>
+<rect x="430" y="100" width="240" height="430" rx="10" fill="#f4f7ea" stroke="#5b7a1a" stroke-width="2"/>
+<text x="550.0" y="92" text-anchor="middle" font-size="14" fill="#0b2233" font-weight="700">NodeMCU ESP8266</text>
+<circle cx="430" cy="200" r="4" fill="#222"/>
+<text x="440" y="204" text-anchor="start" font-size="12" fill="#222" font-weight="400">D1  (GPIO5)</text>
+<circle cx="430" cy="230" r="4" fill="#222"/>
+<text x="440" y="234" text-anchor="start" font-size="12" fill="#222" font-weight="400">D2  (GPIO4)</text>
+<circle cx="430" cy="300" r="4" fill="#222"/>
+<text x="440" y="304" text-anchor="start" font-size="12" fill="#222" font-weight="400">D0  (GPIO16)</text>
+<circle cx="430" cy="340" r="4" fill="#222"/>
+<text x="440" y="344" text-anchor="start" font-size="12" fill="#222" font-weight="400">3V3</text>
+<circle cx="430" cy="400" r="4" fill="#222"/>
+<text x="440" y="404" text-anchor="start" font-size="12" fill="#222" font-weight="400">D4  (GPIO2)</text>
+<circle cx="430" cy="440" r="4" fill="#222"/>
+<text x="440" y="444" text-anchor="start" font-size="12" fill="#222" font-weight="400">VIN (5V)</text>
+<circle cx="430" cy="480" r="4" fill="#222"/>
+<text x="440" y="484" text-anchor="start" font-size="12" fill="#222" font-weight="400">GND</text>
+<circle cx="670" cy="150" r="4" fill="#222"/>
+<text x="660" y="154" text-anchor="end" font-size="12" fill="#222" font-weight="400">D5  (GPIO14)</text>
+<circle cx="670" cy="200" r="4" fill="#222"/>
+<text x="660" y="204" text-anchor="end" font-size="12" fill="#222" font-weight="400">D6  (GPIO12)</text>
+<circle cx="670" cy="400" r="4" fill="#222"/>
+<text x="660" y="404" text-anchor="end" font-size="12" fill="#222" font-weight="400">D7  (GPIO13)</text>
+<circle cx="670" cy="450" r="4" fill="#222"/>
+<text x="660" y="454" text-anchor="end" font-size="12" fill="#222" font-weight="400">D8  (GPIO15)</text>
+<circle cx="670" cy="500" r="4" fill="#222"/>
+<text x="660" y="504" text-anchor="end" font-size="12" fill="#222" font-weight="400">GND</text>
+<rect x="60" y="120" width="170" height="140" rx="10" fill="#eaf4fb" stroke="#2b5878" stroke-width="2"/>
+<text x="145.0" y="112" text-anchor="middle" font-size="14" fill="#0b2233" font-weight="700">LCD I2C 16x2</text>
+<circle cx="230" cy="145" r="4" fill="#222"/>
+<text x="220" y="149" text-anchor="end" font-size="12" fill="#222" font-weight="400">VCC</text>
+<circle cx="230" cy="172" r="4" fill="#222"/>
+<text x="220" y="176" text-anchor="end" font-size="12" fill="#222" font-weight="400">GND</text>
+<circle cx="230" cy="200" r="4" fill="#222"/>
+<text x="220" y="204" text-anchor="end" font-size="12" fill="#222" font-weight="400">SCL</text>
+<circle cx="230" cy="230" r="4" fill="#222"/>
+<text x="220" y="234" text-anchor="end" font-size="12" fill="#222" font-weight="400">SDA</text>
+<polyline fill="none" stroke="#1f77b4" stroke-width="3" stroke-linejoin="round" points="430,200 230,200"/>
+<polyline fill="none" stroke="#2ca02c" stroke-width="3" stroke-linejoin="round" points="430,230 230,230"/>
+<text x="330" y="192" text-anchor="middle" font-size="11" fill="#1f77b4" font-weight="700">SCL</text>
+<text x="330" y="222" text-anchor="middle" font-size="11" fill="#2ca02c" font-weight="700">SDA</text>
+<polyline fill="none" stroke="#c0392b" stroke-width="3" stroke-linejoin="round" points="230,145 256,145"/>
+<text x="260" y="149" text-anchor="start" font-size="12" fill="#c0392b" font-weight="700">5V</text>
+<polyline fill="none" stroke="#444" stroke-width="3" stroke-linejoin="round" points="230,172 256,172"/>
+<text x="260" y="176" text-anchor="start" font-size="12" fill="#444" font-weight="700">GND</text>
+<text x="145" y="278" text-anchor="middle" font-size="11" fill="#555" font-weight="400">alamat 0x27 atau 0x3F (otomatis)</text>
+<text x="145" y="318" text-anchor="middle" font-size="13" fill="#0b2233" font-weight="700">Saklar manual ON/OFF</text>
+<polyline fill="none" stroke="#7f8c8d" stroke-width="3" stroke-linejoin="round" points="430,300 300,300"/>
+<circle cx="300" cy="300" r="4" fill="#222"/>
+<line x1="300" y1="300" x2="248" y2="278" stroke="#222" stroke-width="3"/>
+<circle cx="240" cy="300" r="4" fill="#222"/>
+<polyline fill="none" stroke="#d35400" stroke-width="3" stroke-linejoin="round" points="240,300 214,300"/>
+<text x="208" y="304" text-anchor="end" font-size="12" fill="#d35400" font-weight="700">3V3</text>
+<text x="270" y="330" text-anchor="middle" font-size="11" fill="#555" font-weight="400">D0 ke 3V3 lewat saklar</text>
+<rect x="60" y="380" width="170" height="130" rx="10" fill="#eaf4fb" stroke="#2b5878" stroke-width="2"/>
+<text x="145.0" y="372" text-anchor="middle" font-size="14" fill="#0b2233" font-weight="700">Modul relay</text>
+<circle cx="230" cy="400" r="4" fill="#222"/>
+<text x="220" y="404" text-anchor="end" font-size="12" fill="#222" font-weight="400">IN</text>
+<circle cx="230" cy="440" r="4" fill="#222"/>
+<text x="220" y="444" text-anchor="end" font-size="12" fill="#222" font-weight="400">VCC</text>
+<circle cx="230" cy="480" r="4" fill="#222"/>
+<text x="220" y="484" text-anchor="end" font-size="12" fill="#222" font-weight="400">GND</text>
+<polyline fill="none" stroke="#2980b9" stroke-width="4" stroke-linejoin="round" points="430,400 230,400"/>
+<text x="330" y="392" text-anchor="middle" font-size="11" fill="#2980b9" font-weight="700">biru (IN)</text>
+<polyline fill="none" stroke="#8e44ad" stroke-width="4" stroke-linejoin="round" points="230,440 262,440"/>
+<text x="268" y="444" text-anchor="start" font-size="12" fill="#8e44ad" font-weight="700">5V (ungu)</text>
+<polyline fill="none" stroke="#27ae60" stroke-width="4" stroke-linejoin="round" points="230,480 262,480"/>
+<text x="268" y="484" text-anchor="start" font-size="12" fill="#27ae60" font-weight="700">GND (hijau)</text>
+<text x="145" y="532" text-anchor="middle" font-size="11" fill="#c0392b" font-weight="700">COM dan NO ke pompa</text>
+<polyline fill="none" stroke="#d35400" stroke-width="3" stroke-linejoin="round" points="430,340 404,340"/>
+<text x="400" y="344" text-anchor="end" font-size="12" fill="#d35400" font-weight="700">3V3</text>
+<polyline fill="none" stroke="#c0392b" stroke-width="3" stroke-linejoin="round" points="430,440 404,440"/>
+<text x="400" y="444" text-anchor="end" font-size="12" fill="#c0392b" font-weight="700">5V</text>
+<polyline fill="none" stroke="#444" stroke-width="3" stroke-linejoin="round" points="430,480 404,480"/>
+<text x="400" y="484" text-anchor="end" font-size="12" fill="#444" font-weight="700">GND</text>
+<polyline fill="none" stroke="#444" stroke-width="3" stroke-linejoin="round" points="670,500 696,500"/>
+<text x="700" y="504" text-anchor="start" font-size="12" fill="#444" font-weight="700">GND</text>
+<rect x="880" y="90" width="180" height="180" rx="10" fill="#eaf4fb" stroke="#2b5878" stroke-width="2"/>
+<text x="970.0" y="82" text-anchor="middle" font-size="14" fill="#0b2233" font-weight="700">Sensor 1 HC-SR04 (toren D8)</text>
+<circle cx="880" cy="115" r="4" fill="#222"/>
+<text x="890" y="119" text-anchor="start" font-size="12" fill="#222" font-weight="400">VCC</text>
+<circle cx="880" cy="150" r="4" fill="#222"/>
+<text x="890" y="154" text-anchor="start" font-size="12" fill="#222" font-weight="400">TRIG</text>
+<circle cx="880" cy="200" r="4" fill="#222"/>
+<text x="890" y="204" text-anchor="start" font-size="12" fill="#222" font-weight="400">ECHO</text>
+<circle cx="880" cy="245" r="4" fill="#222"/>
+<text x="890" y="249" text-anchor="start" font-size="12" fill="#222" font-weight="400">GND</text>
+<polyline fill="none" stroke="#8a8a8a" stroke-width="4" stroke-linejoin="round" points="670,150 880,150"/>
+<text x="775" y="142" text-anchor="middle" font-size="11" fill="#555" font-weight="700">abu abu (TRIG)</text>
+<polyline fill="none" stroke="#8e44ad" stroke-width="4" stroke-linejoin="round" points="880,200 850,200"/>
+<rect x="800" y="190" width="50" height="20" fill="#fff" stroke="#222" stroke-width="2"/>
+<text x="825" y="205" text-anchor="middle" font-size="12" fill="#222" font-weight="400">1k</text>
+<polyline fill="none" stroke="#8e44ad" stroke-width="4" stroke-linejoin="round" points="800,200 760,200 670,200"/>
+<circle cx="760" cy="200" r="4" fill="#222"/>
+<polyline fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round" points="760,200 760,222"/>
+<rect x="750" y="222" width="20" height="40" fill="#fff" stroke="#222" stroke-width="2"/>
+<text x="790" y="247" text-anchor="start" font-size="12" fill="#222" font-weight="400">2k</text>
+<polyline fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round" points="760,262 760,278"/>
+<text x="760" y="292" text-anchor="middle" font-size="12" fill="#444" font-weight="700">GND</text>
+<text x="775" y="186" text-anchor="middle" font-size="11" fill="#8e44ad" font-weight="700">ungu (ECHO)</text>
+<polyline fill="none" stroke="#c0392b" stroke-width="3" stroke-linejoin="round" points="880,115 854,115"/>
+<text x="850" y="119" text-anchor="end" font-size="12" fill="#c0392b" font-weight="700">5V</text>
+<polyline fill="none" stroke="#444" stroke-width="3" stroke-linejoin="round" points="880,245 854,245"/>
+<text x="850" y="249" text-anchor="end" font-size="12" fill="#444" font-weight="700">GND</text>
+<text x="970" y="288" text-anchor="middle" font-size="11" fill="#555" font-weight="400">putih=VCC, hitam=GND</text>
+<rect x="880" y="340" width="180" height="180" rx="10" fill="#eaf4fb" stroke="#2b5878" stroke-width="2"/>
+<text x="970.0" y="332" text-anchor="middle" font-size="14" fill="#0b2233" font-weight="700">Sensor 2 HC-SR04 (toren D7)</text>
+<circle cx="880" cy="365" r="4" fill="#222"/>
+<text x="890" y="369" text-anchor="start" font-size="12" fill="#222" font-weight="400">VCC</text>
+<circle cx="880" cy="400" r="4" fill="#222"/>
+<text x="890" y="404" text-anchor="start" font-size="12" fill="#222" font-weight="400">TRIG</text>
+<circle cx="880" cy="450" r="4" fill="#222"/>
+<text x="890" y="454" text-anchor="start" font-size="12" fill="#222" font-weight="400">ECHO</text>
+<circle cx="880" cy="495" r="4" fill="#222"/>
+<text x="890" y="499" text-anchor="start" font-size="12" fill="#222" font-weight="400">GND</text>
+<polyline fill="none" stroke="#e67e22" stroke-width="4" stroke-linejoin="round" points="670,400 880,400"/>
+<text x="775" y="392" text-anchor="middle" font-size="11" fill="#e67e22" font-weight="700">oranye (TRIG)</text>
+<polyline fill="none" stroke="#f1c40f" stroke-width="4" stroke-linejoin="round" points="880,450 850,450"/>
+<rect x="800" y="440" width="50" height="20" fill="#fff" stroke="#222" stroke-width="2"/>
+<text x="825" y="455" text-anchor="middle" font-size="12" fill="#222" font-weight="400">1k</text>
+<polyline fill="none" stroke="#f1c40f" stroke-width="4" stroke-linejoin="round" points="800,450 760,450 670,450"/>
+<circle cx="760" cy="450" r="4" fill="#222"/>
+<polyline fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round" points="760,450 760,472"/>
+<rect x="750" y="472" width="20" height="40" fill="#fff" stroke="#222" stroke-width="2"/>
+<text x="790" y="497" text-anchor="start" font-size="12" fill="#222" font-weight="400">2k</text>
+<polyline fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round" points="760,512 760,528"/>
+<text x="760" y="542" text-anchor="middle" font-size="12" fill="#444" font-weight="700">GND</text>
+<text x="775" y="436" text-anchor="middle" font-size="11" fill="#b7950b" font-weight="700">kuning (ECHO)</text>
+<polyline fill="none" stroke="#c0392b" stroke-width="3" stroke-linejoin="round" points="880,365 854,365"/>
+<text x="850" y="369" text-anchor="end" font-size="12" fill="#c0392b" font-weight="700">5V</text>
+<polyline fill="none" stroke="#444" stroke-width="3" stroke-linejoin="round" points="880,495 854,495"/>
+<text x="850" y="499" text-anchor="end" font-size="12" fill="#444" font-weight="700">GND</text>
+<text x="970" y="538" text-anchor="middle" font-size="11" fill="#555" font-weight="400">merah=VCC, cokelat=GND</text>
+<rect x="40" y="580" width="1020" height="170" rx="10" fill="#f7f9fb" stroke="#c9d6e0"/>
+<text x="60" y="606" text-anchor="start" font-size="14" fill="#0b2233" font-weight="700">Catatan penting</text>
+<text x="60" y="630" text-anchor="start" font-size="12" fill="#333" font-weight="400">• Semua VCC (LCD, relay, 2 sensor) ke pin VIN 5V NodeMCU. Semua GND disatukan ke pin GND NodeMCU.</text>
+<text x="60" y="650" text-anchor="start" font-size="12" fill="#333" font-weight="400">• ECHO sensor mengeluarkan 5V, sedangkan pin ESP8266 hanya tahan 3,3V. Pembagi tegangan 1k seri dan 2k ke GND dianjurkan agar pin tidak rusak.</text>
+<text x="60" y="670" text-anchor="start" font-size="12" fill="#333" font-weight="400">• D4 (GPIO2) harus HIGH saat boot, jadi dipakai untuk relay yang aktif LOW (mati saat HIGH). D8 (GPIO15) harus LOW saat boot, dan ECHO sensor normalnya LOW.</text>
+<text x="60" y="690" text-anchor="start" font-size="12" fill="#333" font-weight="400">• Saklar manual ke 3V3 (bukan GND). Saklar ON langsung menyalakan pompa 20 menit, saklar OFF langsung mematikan.</text>
+<text x="60" y="710" text-anchor="start" font-size="12" fill="#333" font-weight="400">• Kabel sensor 15 meter: pasang kapasitor 100 uF dan 0,1 uF antara VCC dan GND di dekat sensor, dan jauhkan dari kabel AC.</text>
+<text x="60" y="730" text-anchor="start" font-size="12" fill="#333" font-weight="400">• Bagian pompa memakai tegangan tinggi (jika AC). Hanya kontak relay yang menyentuh jalur pompa. Pasang dengan aman dan terisolasi.</text>
+</svg>
