@@ -30,6 +30,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -48,12 +50,15 @@ public class MainActivity extends Activity {
     private static final String APP_URL = "https://" + APP_HOST + "/assets/index.html";
     private static final int REQ_BIN = 41;
     private static final int REQ_NOTIF = 42;
+    private static final int REQ_CSV = 43;
+    private static final int MAX_CSV = 4 * 1024 * 1024;
     private static final int OTA_PORT = 8266;
 
     private WebView web;
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private volatile byte[] binData = null;
     private volatile boolean busy = false;
+    private volatile byte[] csvData = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -190,6 +195,33 @@ public class MainActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQ_BIN && resultCode == RESULT_OK && data != null && data.getData() != null) loadBin(data.getData());
+        if (requestCode == REQ_CSV) {
+            if (resultCode == RESULT_OK && data != null && data.getData() != null) tulisCsv(data.getData());
+            else csvData = null;
+        }
+    }
+
+    /** Menulis CSV ke berkas yang dipilih pengguna lewat pemilih berkas bawaan Android. */
+    private void tulisCsv(final Uri uri) {
+        final byte[] d = csvData;
+        csvData = null;
+        if (d == null) return;
+        io.execute(new Runnable() {
+            @Override public void run() {
+                OutputStream out = null;
+                try {
+                    out = getContentResolver().openOutputStream(uri, "wt");
+                    if (out == null) throw new IOException("Tidak bisa membuka berkas tujuan");
+                    out.write(d);
+                    out.flush();
+                    emit("csv", true, "File CSV tersimpan (" + Math.max(1, d.length / 1024) + " KB)", -1);
+                } catch (Exception e) {
+                    emit("csv", false, e.getMessage() == null ? "Gagal menyimpan file CSV" : "Gagal menyimpan: " + e.getMessage(), -1);
+                } finally {
+                    try { if (out != null) out.close(); } catch (IOException ignored) { }
+                }
+            }
+        });
     }
 
     @Override
@@ -242,6 +274,37 @@ public class MainActivity extends Activity {
                         Intent i = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:" + getPackageName()));
                         startActivity(i);
                     } catch (Exception ignored) { }
+                }
+            });
+        }
+
+        /** Menyimpan teks CSV: membuka pemilih berkas supaya pengguna menentukan nama dan lokasi. Aman, tanpa izin penyimpanan. */
+        @JavascriptInterface
+        public void simpanCsv(String nama, String teks) {
+            if (teks == null || teks.length() == 0) { emit("csv", false, "Tidak ada data untuk disimpan", -1); return; }
+            if (teks.length() > MAX_CSV) { emit("csv", false, "Data terlalu besar untuk satu file", -1); return; }
+            String aman = (nama == null ? "" : nama).replaceAll("[^A-Za-z0-9._-]", "_");
+            if (aman.length() == 0 || aman.length() > 80) aman = "data-pompa.csv";
+            if (!aman.endsWith(".csv")) aman = aman + ".csv";
+            final String judul = aman;
+            byte[] isi = teks.getBytes(Charset.forName("UTF-8"));
+            // BOM UTF-8 supaya Excel membaca huruf dengan benar
+            byte[] d = new byte[isi.length + 3];
+            d[0] = (byte) 0xEF; d[1] = (byte) 0xBB; d[2] = (byte) 0xBF;
+            System.arraycopy(isi, 0, d, 3, isi.length);
+            csvData = d;
+            runOnUiThread(new Runnable() {
+                @Override public void run() {
+                    try {
+                        Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                        i.addCategory(Intent.CATEGORY_OPENABLE);
+                        i.setType("text/csv");
+                        i.putExtra(Intent.EXTRA_TITLE, judul);
+                        startActivityForResult(i, REQ_CSV);
+                    } catch (Exception e) {
+                        csvData = null;
+                        emit("csv", false, "Tidak ada aplikasi pemilih berkas di ponsel ini", -1);
+                    }
                 }
             });
         }

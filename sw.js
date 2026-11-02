@@ -1,4 +1,4 @@
-const CACHE = "pompa-v8";
+const CACHE = "pompa-v9";
 const FILES = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", e => {

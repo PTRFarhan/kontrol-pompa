@@ -286,7 +286,21 @@ progress{width:100%;height:12px;margin:12px 0 4px;accent-color:var(--water)}
   </div>
 
   <div class="card">
-    <h2>Grafik lama nyala</h2>
+    <h2>Pemakaian listrik pompa</h2>
+    <p class="small" style="margin-top:0">Isi daya pompa sesuai tulisan di badan pompa. Pemakaian dihitung dari daya dikali lama pompa menyala di riwayat. Daya disimpan di database, jadi sama untuk semua pengguna.</p>
+    <div class="jrow">
+      <div><label for="numWatt">Daya pompa (watt)</label><input id="numWatt" type="text" inputmode="decimal" autocomplete="off" placeholder="Contoh 125"></div>
+      <div style="display:flex;align-items:flex-end"><button class="full" id="btnWatt">Simpan daya</button></div>
+    </div>
+    <div id="eList" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card">
+    <h2>Grafik pemakaian pompa</h2>
+    <div class="seg" id="metSeg">
+      <button data-m="waktu" class="sel">Lama nyala</button>
+      <button data-m="listrik">Listrik</button>
+    </div>
     <div class="seg" id="grpSeg">
       <button data-g="hari" class="sel">Harian</button>
       <button data-g="minggu">Mingguan</button>
@@ -314,6 +328,19 @@ progress{width:100%;height:12px;margin:12px 0 4px;accent-color:var(--water)}
     <div id="histList"><div class="empty">Memuat...</div></div>
     <button class="full" id="btnHistRefresh" style="margin-top:12px">Muat ulang riwayat</button>
   </div>
+
+  <div class="card">
+    <h2>Unduh data (CSV)</h2>
+    <p class="small" style="margin-top:0">File CSV bisa dibuka di Excel atau Google Sheets. Pilih format sesuai program yang dipakai.</p>
+    <div class="seg" id="csvSeg">
+      <button data-f="id" class="sel">Excel Indonesia</button>
+      <button data-f="umum">Umum</button>
+    </div>
+    <button class="full" id="btnCsvRiwayat">Riwayat pompa menyala</button>
+    <button class="full" id="btnCsvRekap" style="margin-top:8px">Rekap pemakaian per periode</button>
+    <button class="full" id="btnCsvLevel" style="margin-top:8px">Level air toren</button>
+    <p class="small" id="csvNote">Excel Indonesia memakai titik koma sebagai pemisah kolom dan koma untuk desimal. Format Umum memakai koma dan titik.</p>
+  </div>
 </section>
 
 <!-- ============ JADWAL ============ -->
@@ -324,6 +351,16 @@ progress{width:100%;height:12px;margin:12px 0 4px;accent-color:var(--water)}
     <div id="jdwList"><div class="empty">Memuat...</div></div>
     <button class="primary full" id="btnJdwSave" style="margin-top:12px" disabled>Simpan jadwal</button>
     <p class="small">Pompa yang sedang menyala tidak ditimpa jadwal. Tombol Matikan di aplikasi dan saklar manual tetap bisa menghentikan pompa kapan saja.</p>
+  </div>
+
+  <div class="card">
+    <h2>Reboot otomatis alat</h2>
+    <p class="small" style="margin-top:0">Alat mulai ulang sendiri untuk menjaga kestabilan. Reboot hanya dilakukan saat pompa mati. Bila pompa sedang menyala pada jam itu, reboot menunggu sampai pompa mati, paling lama satu jam. Setelan disimpan di alat, jadi tetap jalan walau internet mati. Jam mengikuti WIB.</p>
+    <div class="ck"><span>Reboot otomatis<small>Matikan bila alat tidak perlu mulai ulang sendiri</small></span><label class="sw" style="margin:0"><input type="checkbox" id="rbOn" aria-label="Aktifkan reboot otomatis"><i></i></label></div>
+    <div class="jrow"><div><label for="rbTime">Jam reboot</label><input type="time" id="rbTime" value="03:00"></div></div>
+    <div class="jdays" id="rbDays"><span class="chip" data-d="0" tabindex="0">Min</span><span class="chip" data-d="1" tabindex="0">Sen</span><span class="chip" data-d="2" tabindex="0">Sel</span><span class="chip" data-d="3" tabindex="0">Rab</span><span class="chip" data-d="4" tabindex="0">Kam</span><span class="chip" data-d="5" tabindex="0">Jum</span><span class="chip" data-d="6" tabindex="0">Sab</span></div>
+    <button class="primary full" id="btnRbSave" disabled>Simpan reboot otomatis</button>
+    <p class="small" id="rbInfo"></p>
   </div>
 </section>
 
@@ -738,6 +775,14 @@ let histData = [], histDirty = true, histGroup = "hari", histSel = null, histLoa
 const BLN = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
 const HARI = ["Min","Sen","Sel","Rab","Kam","Jum","Sab"];
 const p2 = n => String(n).padStart(2,"0");
+let daya = 0;                                   // daya pompa dalam watt, dari database (setelan/watt)
+function fmtAngka(x, d){ return x.toFixed(d).replace(".", ","); }
+function fmtEnergi(wh){
+  if(!(wh>0)) return "0 Wh";
+  if(wh<1000) return fmtAngka(wh, wh<10 ? 2 : (wh<100 ? 1 : 0))+" Wh";
+  return fmtAngka(wh/1000, wh<10000 ? 2 : 1)+" kWh";
+}
+const whDari = sec => daya*sec/3600;            // watt kali jam = watt jam (Wh)
 function fmtDur(sec){
   sec = Math.round(sec);
   if(sec<60) return sec+" dtk";
@@ -811,6 +856,17 @@ function renderSummary(sesi){
     for(const k of kunci) h += `<div class="who"><span>${esc(k)}</span><b>${fmtDur(per[k].sum)} · ${per[k].n}x</b></div>`;
   }
   $("sumList").innerHTML = h;
+  let e = "";
+  if(!(daya>0)) e = `<div class="empty">Isi daya pompa di atas supaya pemakaian listrik dihitung.</div>`;
+  else{
+    for(const [lbl,r] of rows) e += `<div class="kv"><span>${lbl}</span><b>${r.n? fmtEnergi(whDari(r.sum)) : "0 Wh"}</b></div>`;
+    e += `<div class="small" style="margin-top:8px">Dihitung dari daya ${fmtAngka(daya, daya%1?1:0)} watt dikali lama pompa menyala. Ini perkiraan, bukan hasil alat ukur.</div>`;
+    if(kunci.length){
+      e += `<div class="small" style="margin:14px 0 4px">Menurut pengguna dalam 30 hari terakhir</div>`;
+      for(const k of kunci) e += `<div class="who"><span>${esc(k)}</span><b>${fmtEnergi(whDari(per[k].sum))}</b></div>`;
+    }
+  }
+  $("eList").innerHTML = e;
 }
 function buatBucket(sesi){
   const now = new Date(), out = [];
@@ -827,20 +883,25 @@ function buatBucket(sesi){
   }
   return out;
 }
+let histMet = "waktu";
 function renderChart(bs){
   const W=320,H=170,L=34,R=6,T=14,B=26, pw=W-L-R, ph=H-T-B;
-  const maxSec = Math.max(60, ...bs.map(b=>b.sum));
-  const unitJam = maxSec>=2*3600, div = unitJam?3600:60, unit = unitJam?"j":"mnt";
-  let top = maxSec/div; const step = Math.pow(10, Math.floor(Math.log10(top))); top = Math.ceil(top/step)*step;
-  let svg = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Grafik lama pompa menyala">`;
+  const listrik = histMet==="listrik" && daya>0;
+  const vals = bs.map(b=> listrik ? whDari(b.sum) : b.sum);
+  const maxV = Math.max(listrik ? 1 : 60, ...vals);
+  let div, unit;
+  if(listrik){ const kwh = maxV>=2000; div = kwh?1000:1; unit = kwh?"kWh":"Wh"; }
+  else{ const unitJam = maxV>=2*3600; div = unitJam?3600:60; unit = unitJam?"j":"mnt"; }
+  let top = maxV/div; const step = Math.pow(10, Math.floor(Math.log10(top))); top = Math.ceil(top/step)*step;
+  let svg = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${listrik?"Grafik pemakaian listrik pompa":"Grafik lama pompa menyala"}">`;
   for(let i=0;i<=3;i++){
     const y = T+ph-(ph*i/3), v = top*i/3;
     svg += `<line class="grid" x1="${L}" x2="${W-R}" y1="${y}" y2="${y}"/><text x="${L-4}" y="${y+3}" text-anchor="end">${Math.round(v*10)/10}${i===3?" "+unit:""}</text>`;
   }
   const bw = pw/bs.length;
   bs.forEach((b,i)=>{
-    const h = top>0 ? ph*(b.sum/div)/top : 0, x = L+i*bw+bw*0.15, w = bw*0.7, y = T+ph-h;
-    svg += `<rect class="bar${histSel===i?" sel":""}" data-i="${i}" x="${x}" y="${b.sum>0?y:T+ph-1}" width="${w}" height="${b.sum>0?h:1}" rx="2"><title>${b.label}: ${fmtDur(b.sum)}</title></rect>`;
+    const h = top>0 ? ph*(vals[i]/div)/top : 0, x = L+i*bw+bw*0.15, w = bw*0.7, y = T+ph-h;
+    svg += `<rect class="bar${histSel===i?" sel":""}" data-i="${i}" x="${x}" y="${vals[i]>0?y:T+ph-1}" width="${w}" height="${vals[i]>0?h:1}" rx="2"><title>${b.label}: ${listrik?fmtEnergi(vals[i]):fmtDur(b.sum)}</title></rect>`;
     const skip = bs.length>12 && i%2===1;
     if(!skip) svg += `<text x="${x+w/2}" y="${H-10}" text-anchor="middle">${b.short}</text>`;
   });
@@ -850,9 +911,9 @@ function renderChart(bs){
 }
 /* ---------- Grafik level air ---------- */
 let lvlRange = 24, lvlData = [], lvlLoaded = false;
-async function fetchLevel(){
+async function fetchLevel(limitAtas){
   if(DEMO) return [];
-  const limit = {24:110, 168:720, 720:2950}[lvlRange];
+  const limit = limitAtas || {24:110, 168:720, 720:2950}[lvlRange];
   const r = await fetch(`${DB_URL}/data/${MASTER}_level.json?orderBy=%22%24key%22&limitToLast=${limit}`, {cache:"no-store"});
   if(!r.ok) throw new Error("Gagal membaca level");
   const o = await r.json();
@@ -902,10 +963,10 @@ function renderList(bs){
   let h = "";
   for(const b of rows){
     const idx = bs.indexOf(b);
-    h += `<details class="b" ${histSel===idx?"open":""}><summary><span>${b.label}</span><b>${fmtDur(b.sum)} · ${b.n}x</b></summary>`;
+    h += `<details class="b" ${histSel===idx?"open":""}><summary><span>${b.label}</span><b>${fmtDur(b.sum)} · ${b.n}x${daya>0?" · "+fmtEnergi(whDari(b.sum)):""}</b></summary>`;
     for(const x of b.sesi.slice().reverse()){
       const tglBeda = new Date(x.mulai*1000).toDateString() !== new Date(x.selesai*1000).toDateString();
-      h += `<div class="ses">Nyala <span>${fmtJam(x.mulai)}</span> sampai ${x.live? "<span>sekarang</span>" : "mati <span>"+fmtJam(x.selesai)+(tglBeda?" ("+new Date(x.selesai*1000).getDate()+" "+BLN[new Date(x.selesai*1000).getMonth()]+")":"")+"</span>"}<br>Lama <span>${fmtDur(x.detik)}</span> · ${sumberLabel(x)} · ${ALASAN[x.alasan]||x.alasan}</div>`;
+      h += `<div class="ses">Nyala <span>${fmtJam(x.mulai)}</span> sampai ${x.live? "<span>sekarang</span>" : "mati <span>"+fmtJam(x.selesai)+(tglBeda?" ("+new Date(x.selesai*1000).getDate()+" "+BLN[new Date(x.selesai*1000).getMonth()]+")":"")+"</span>"}<br>Lama <span>${fmtDur(x.detik)}</span>${daya>0?" · <span>"+fmtEnergi(whDari(x.detik))+"</span>":""} · ${sumberLabel(x)} · ${ALASAN[x.alasan]||x.alasan}</div>`;
     }
     h += `</details>`;
   }
@@ -918,8 +979,16 @@ function renderHist(keepSel){
   if(!keepSel) histSel = null;
   renderChart(bs); renderList(bs);
   const tot = bs.reduce((a,b)=>a+b.sum,0);
-  $("chartNote").textContent = `Total pada grafik: ${fmtDur(tot)}. Ketuk batang untuk melihat rinciannya. ${histGroup==="hari"?"Menampilkan 14 hari terakhir.":histGroup==="minggu"?"Menampilkan 12 minggu terakhir (minggu mulai Senin).":histGroup==="bulan"?"Menampilkan 12 bulan terakhir.":"Menampilkan per tahun."}`;
+  const totTeks = (histMet==="listrik" && daya>0) ? fmtEnergi(whDari(tot)) : fmtDur(tot);
+  $("chartNote").textContent = `Total pada grafik: ${totTeks}. Ketuk batang untuk melihat rinciannya. ${histGroup==="hari"?"Menampilkan 14 hari terakhir.":histGroup==="minggu"?"Menampilkan 12 minggu terakhir (minggu mulai Senin).":histGroup==="bulan"?"Menampilkan 12 bulan terakhir.":"Menampilkan per tahun."}`;
 }
+document.querySelectorAll("#metSeg button").forEach(b=>{
+  b.onclick=()=>{
+    if(b.dataset.m==="listrik" && !(daya>0)){ toast("Isi daya pompa dulu di kartu Pemakaian listrik"); return; }
+    document.querySelectorAll("#metSeg button").forEach(x=>x.classList.remove("sel")); b.classList.add("sel");
+    histMet = b.dataset.m; renderHist(true);
+  };
+});
 document.querySelectorAll("#grpSeg button").forEach(b=>{
   b.onclick=()=>{ document.querySelectorAll("#grpSeg button").forEach(x=>x.classList.remove("sel")); b.classList.add("sel"); histGroup=b.dataset.g; histSel=null; renderHist(); };
 });
@@ -969,6 +1038,144 @@ $("btnJdwSave").onclick = async ()=>{
     for(let i=0;i<out.length;i++) await dbPut("jadwal/j"+i, out[i]);
     jdwEdit = false; toast("Jadwal tersimpan, alat memperbarui dalam beberapa detik");
   }catch(e){ $("btnJdwSave").disabled = false; toast("Gagal: "+e.message); }
+};
+
+/* ---------- Setelan: daya pompa dan reboot otomatis ---------- */
+let setelan = {}, wattEdit = false, rbEdit = false;
+function onSetelan(v){
+  setelan = v || {};
+  const w = Number(setelan.watt);
+  daya = (w>0 && w<=10000) ? w : 0;
+  if(!wattEdit) $("numWatt").value = daya>0 ? String(daya) : "";
+  if(daya<=0 && histMet==="listrik"){ histMet="waktu"; document.querySelectorAll("#metSeg button").forEach(x=>x.classList.toggle("sel", x.dataset.m==="waktu")); }
+  renderHist(true);
+  if(!rbEdit) renderReboot();
+}
+$("numWatt").oninput = ()=>{ wattEdit = true; };
+$("btnWatt").onclick = async ()=>{
+  const w = Number(String($("numWatt").value).replace(",", "."));
+  if(!(w>0 && w<=10000)){ toast("Isi daya pompa antara 1 dan 10000 watt"); return; }
+  $("btnWatt").disabled = true;
+  try{ await dbPut("setelan/watt", Math.round(w*10)/10); wattEdit = false; toast("Daya pompa tersimpan"); }
+  catch(e){ toast("Gagal: "+e.message); }
+  $("btnWatt").disabled = false;
+};
+
+const RB_DEFAULT = { aktif:true, jam:3, menit:0, hari:127 };
+function rbRingkas(r){
+  if(!r.aktif) return "Reboot otomatis mati. Alat hanya mulai ulang bila macet atau menyala 10 hari tanpa reboot.";
+  const hari = r.hari===127 ? "setiap hari" : "hari "+NAMA_HARI.filter((n,d)=>(r.hari>>d)&1).join(", ");
+  return `Alat akan reboot ${hari} pukul ${p2(r.jam)}:${p2(r.menit)} WIB.`;
+}
+function renderReboot(){
+  const r = Object.assign({}, RB_DEFAULT, setelan.reboot || {});
+  $("rbOn").checked = !!r.aktif;
+  $("rbTime").value = p2(r.jam)+":"+p2(r.menit);
+  $("rbDays").querySelectorAll(".chip").forEach(c=>c.classList.toggle("sel", !!((r.hari>>Number(c.dataset.d))&1)));
+  $("rbDays").style.opacity = r.aktif ? "" : ".45";
+  $("btnRbSave").disabled = !rbEdit;
+  $("rbInfo").textContent = (setelan.reboot ? "" : "Belum pernah diatur dari aplikasi, alat memakai bawaan. ") + rbRingkas(r);
+}
+(function(){
+  const tandai = ()=>{ rbEdit = true; $("btnRbSave").disabled = false; };
+  $("rbOn").onchange = e=>{ $("rbDays").style.opacity = e.target.checked ? "" : ".45"; tandai(); };
+  $("rbTime").oninput = tandai;
+  $("rbDays").querySelectorAll(".chip").forEach(c=>{
+    c.onclick = ()=>{ c.classList.toggle("sel"); tandai(); };
+    c.onkeydown = e=>{ if(e.key==="Enter" || e.key===" "){ e.preventDefault(); c.click(); } };
+  });
+})();
+$("btnRbSave").onclick = async ()=>{
+  const aktif = $("rbOn").checked, [jam, menit] = ($("rbTime").value||"").split(":").map(Number);
+  let hari = 0; $("rbDays").querySelectorAll(".chip.sel").forEach(c=>hari |= 1<<Number(c.dataset.d));
+  if(!(jam>=0 && jam<=23 && menit>=0 && menit<=59)){ toast("Isi jam reboot"); return; }
+  if(aktif && hari===0){ toast("Pilih minimal satu hari"); return; }
+  $("btnRbSave").disabled = true;
+  try{
+    await dbPut("setelan/reboot", {aktif, jam, menit, hari: hari||127});
+    rbEdit = false; toast("Tersimpan, alat memperbarui dalam beberapa detik");
+  }catch(e){ $("btnRbSave").disabled = false; toast("Gagal: "+e.message); }
+};
+
+/* ---------- Unduh CSV ---------- */
+let csvF = "id";
+try{ csvF = localStorage.getItem("csvF") === "umum" ? "umum" : "id"; }catch(e){}
+function csvTampil(){ document.querySelectorAll("#csvSeg button").forEach(x=>x.classList.toggle("sel", x.dataset.f===csvF)); }
+csvTampil();
+document.querySelectorAll("#csvSeg button").forEach(b=>{ b.onclick=()=>{ csvF=b.dataset.f; try{localStorage.setItem("csvF",csvF);}catch(e){} csvTampil(); }; });
+const csvSep = () => csvF==="id" ? ";" : ",";
+function csvNum(n, d){ const t = Number(n).toFixed(d); return csvF==="id" ? t.replace(".", ",") : t; }
+function csvSel(v){                              // satu sel: kutip bila perlu, dan tahan rumus Excel pada teks dari pengguna
+  let t = v==null ? "" : String(v);
+  if(/^[=+\-@\t\r]/.test(t) && !/^-?\d+([.,]\d+)?$/.test(t)) t = "'"+t;
+  if(t.includes('"') || t.includes("\n") || t.includes("\r") || t.includes(csvSep())) t = '"'+t.replace(/"/g,'""')+'"';
+  return t;
+}
+function csvBuat(baris){ return baris.map(r=>r.map(csvSel).join(csvSep())).join("\r\n")+"\r\n"; }
+const ymd = d => `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;
+const hms = d => `${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`;
+function stempel(){ const d=new Date(); return `${ymd(d)}_${p2(d.getHours())}${p2(d.getMinutes())}`; }
+function unduhCsv(nama, teks){
+  if(window.AndroidOta && window.AndroidOta.simpanCsv){
+    try{ window.AndroidOta.simpanCsv(nama, teks); toast("Pilih tempat menyimpan file"); return; }catch(e){}
+  }
+  const blob = new Blob(["﻿"+teks], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = nama; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  toast("File CSV diunduh");
+}
+const SUMBER_CSV = x => x.sumber==="MANUAL" ? "Tombol manual" : (x.sumber==="JADWAL" ? "Jadwal" : "Aplikasi");
+function csvRiwayat(sesi){
+  const baris = [["No","Tanggal mulai","Jam mulai","Tanggal selesai","Jam selesai","Lama (detik)","Lama (menit)","Sumber","Pengguna","Alasan berhenti","Daya (watt)","Energi (Wh)","Energi (kWh)"]];
+  sesi.forEach((x,i)=>{
+    const m = new Date(x.mulai*1000), s = new Date(x.selesai*1000), wh = whDari(x.detik);
+    baris.push([i+1, ymd(m), hms(m), x.live?"":ymd(s), x.live?"":hms(s), Math.round(x.detik), csvNum(x.detik/60,2), SUMBER_CSV(x), x.oleh||"", ALASAN[x.alasan]||x.alasan||"",
+      daya>0 ? csvNum(daya,1) : "", daya>0 ? csvNum(wh,2) : "", daya>0 ? csvNum(wh/1000,4) : ""]);
+  });
+  return csvBuat(baris);
+}
+function csvRekap(sesi, g){
+  const peta = new Map();
+  for(const x of sesi){
+    const d = new Date(x.mulai*1000);
+    const awal = g==="hari" ? startOfDay(d) : g==="minggu" ? startOfWeek(d) : g==="bulan" ? startOfMonth(d) : startOfYear(d);
+    const k = awal.getTime();
+    if(!peta.has(k)) peta.set(k, {awal, sum:0, n:0});
+    const b = peta.get(k); b.sum += x.detik; b.n++;
+  }
+  const nama = {hari:"Harian", minggu:"Mingguan", bulan:"Bulanan", tahun:"Tahunan"}[g];
+  const baris = [[`Periode (${nama})`,"Awal periode","Jumlah nyala","Total lama (detik)","Total lama (menit)","Daya (watt)","Energi (Wh)","Energi (kWh)"]];
+  for(const k of [...peta.keys()].sort((a,b)=>a-b)){
+    const b = peta.get(k), wh = whDari(b.sum), d = b.awal;
+    let lbl;
+    if(g==="hari") lbl = ymd(d);
+    else if(g==="minggu"){ const e = new Date(d); e.setDate(e.getDate()+6); lbl = ymd(d)+" sampai "+ymd(e); }
+    else if(g==="bulan") lbl = `${d.getFullYear()}-${p2(d.getMonth()+1)}`;
+    else lbl = String(d.getFullYear());
+    baris.push([lbl, ymd(d), b.n, Math.round(b.sum), csvNum(b.sum/60,2), daya>0?csvNum(daya,1):"", daya>0?csvNum(wh,2):"", daya>0?csvNum(wh/1000,4):""]);
+  }
+  return csvBuat(baris);
+}
+$("btnCsvRiwayat").onclick = async ()=>{
+  if(!histLoaded){ try{ histData = await fetchHist(); histLoaded = true; }catch(e){ toast("Riwayat belum bisa dibaca"); return; } }
+  const sesi = semuaSesi();
+  if(!sesi.length){ toast("Belum ada riwayat untuk diunduh"); return; }
+  unduhCsv(`riwayat-pompa_${stempel()}.csv`, csvRiwayat(sesi));
+};
+$("btnCsvRekap").onclick = async ()=>{
+  if(!histLoaded){ try{ histData = await fetchHist(); histLoaded = true; }catch(e){ toast("Riwayat belum bisa dibaca"); return; } }
+  const sesi = semuaSesi();
+  if(!sesi.length){ toast("Belum ada riwayat untuk diunduh"); return; }
+  unduhCsv(`rekap-${histGroup}_${stempel()}.csv`, csvRekap(sesi, histGroup));
+};
+$("btnCsvLevel").onclick = async ()=>{
+  let d;
+  try{ d = await fetchLevel(2950); }catch(e){ toast("Level belum bisa dibaca"); return; }
+  if(!d.length){ toast("Belum ada catatan level untuk diunduh"); return; }
+  const baris = [["Tanggal","Jam","Toren D7 (%)","Toren D8 (%)"]];
+  for(const x of d){ const t = new Date(x.t); baris.push([ymd(t), hms(t), typeof x.d7==="number"?csvNum(x.d7,0):"", typeof x.d8==="number"?csvNum(x.d8,0):""]); }
+  unduhCsv(`level-toren_${stempel()}.csv`, csvBuat(baris));
 };
 
 /* ---------- Ganti WiFi alat ---------- */
@@ -1087,6 +1294,7 @@ if(window.AndroidOta){
   window.otaEvent = function(e){
     if(e.type==="bin"){ otaBin = !!e.ok; $("otaFile").textContent = e.pesan; $("otaFile").style.color = e.ok ? "" : "var(--bad)"; otaBtn(); }
     else if(e.type==="progres"){ $("otaBar").value = e.persen; $("otaMsg").textContent = e.pesan; }
+    else if(e.type==="csv"){ toast(e.pesan); }
     else if(e.type==="selesai"){
       otaRun = false; otaBtn();
       $("otaMsg").textContent = e.pesan; $("otaMsg").style.color = e.ok ? "var(--ok)" : "var(--bad)";
@@ -1105,7 +1313,7 @@ document.querySelectorAll("nav button").forEach(b=>{
     $("pg-"+b.dataset.pg).classList.add("active");
     if(b.dataset.pg==="cal") renderCal();
     if(b.dataset.pg==="hist"){ renderHist(); if(histDirty) loadHist(); loadLevel(); }
-    if(b.dataset.pg==="jdw") renderJadwal();
+    if(b.dataset.pg==="jdw"){ renderJadwal(); renderReboot(); }
   };
 });
 
@@ -1117,6 +1325,7 @@ function start(){
   stream("pompa/status", onPompa);
   stream("perangkat", onPerangkat);
   stream("jadwal", onJadwal);
+  stream("setelan", onSetelan);
   tampilNama(); ntfTerapkan();
   loadHist();
 }
