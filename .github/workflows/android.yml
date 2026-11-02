@@ -1,0 +1,64 @@
+name: Bangun APK Android
+
+on:
+  push:
+    paths:
+      - 'android/**'
+      - 'index.html'
+      - 'manifest.json'
+      - 'icon-*.png'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Salin halaman aplikasi ke dalam APK
+        run: cp index.html manifest.json icon-192.png icon-512.png android/app/src/main/assets/
+
+      - name: Pakai kunci tanda tangan milik sendiri bila rahasia diisi
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/kunci.jks"
+            echo "KEYSTORE_FILE=$RUNNER_TEMP/kunci.jks" >> "$GITHUB_ENV"
+            echo "Memakai kunci milik sendiri."
+          else
+            echo "Memakai kunci bawaan."
+          fi
+
+      - name: Bangun APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: gradle -p android assembleRelease --no-daemon --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KontrolPompa-APK
+          path: android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Terbitkan APK terbaru
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk KontrolPompa.apk
+          gh release delete apk-terbaru --yes --cleanup-tag || true
+          gh release create apk-terbaru KontrolPompa.apk --title "APK terbaru" --notes "Pasang file KontrolPompa.apk di ponsel Android."
