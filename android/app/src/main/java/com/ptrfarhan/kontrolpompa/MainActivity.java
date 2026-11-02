@@ -1,6 +1,8 @@
 package com.ptrfarhan.kontrolpompa;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -12,6 +14,8 @@ import android.os.PowerManager;
 import android.provider.Settings;
 import android.provider.OpenableColumns;
 import android.webkit.JavascriptInterface;
+import android.webkit.JsResult;
+import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
@@ -87,6 +91,41 @@ public class MainActivity extends Activity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 return !APP_HOST.equals(request.getUrl().getHost());   // tidak pernah pindah ke situs lain
+            }
+        });
+
+        // Tanpa WebChromeClient, confirm() di halaman selalu dijawab "batal" tanpa muncul apa-apa.
+        // Akibatnya tombol Kirim dan perbarui, Ganti kode akses, dan Nyalakan tanpa timer tidak bereaksi.
+        web.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onJsConfirm(WebView view, String url, String message, final JsResult result) {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setMessage(message)
+                        .setPositiveButton("Lanjut", new DialogInterface.OnClickListener() {
+                            @Override public void onClick(DialogInterface d, int w) { result.confirm(); }
+                        })
+                        .setNegativeButton("Batal", new DialogInterface.OnClickListener() {
+                            @Override public void onClick(DialogInterface d, int w) { result.cancel(); }
+                        })
+                        .setOnCancelListener(new DialogInterface.OnCancelListener() {
+                            @Override public void onCancel(DialogInterface d) { result.cancel(); }
+                        })
+                        .show();
+                return true;
+            }
+
+            @Override
+            public boolean onJsAlert(WebView view, String url, String message, final JsResult result) {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setMessage(message)
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            @Override public void onClick(DialogInterface d, int w) { result.confirm(); }
+                        })
+                        .setOnCancelListener(new DialogInterface.OnCancelListener() {
+                            @Override public void onCancel(DialogInterface d) { result.confirm(); }
+                        })
+                        .show();
+                return true;
             }
         });
 
