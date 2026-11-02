@@ -2,11 +2,14 @@ package com.ptrfarhan.kontrolpompa;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
+import android.provider.Settings;
 import android.provider.OpenableColumns;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
@@ -40,6 +43,7 @@ public class MainActivity extends Activity {
     private static final String APP_HOST = "appassets.androidplatform.net";
     private static final String APP_URL = "https://" + APP_HOST + "/assets/index.html";
     private static final int REQ_BIN = 41;
+    private static final int REQ_NOTIF = 42;
     private static final int OTA_PORT = 8266;
 
     private WebView web;
@@ -149,7 +153,60 @@ public class MainActivity extends Activity {
         if (requestCode == REQ_BIN && resultCode == RESULT_OK && data != null && data.getData() != null) loadBin(data.getData());
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_NOTIF) {
+            PantauService.mulaiAtauBerhenti(this);
+            web.evaluateJavascript("window.izinNotifEvent && window.izinNotifEvent()", null);
+        }
+    }
+
     public class Bridge {
+        /** Menyimpan pengaturan notifikasi dan menyalakan atau mematikan pemantau. Hanya alamat Firebase yang diterima. */
+        @JavascriptInterface
+        public void aturNotif(String json) {
+            try {
+                JSONObject o = new JSONObject(json);
+                if (!PantauService.sah(o)) return;
+                getSharedPreferences(PantauService.PREFS, MODE_PRIVATE).edit().putString(PantauService.KEY_CFG, o.toString()).apply();
+                PantauService.mulaiAtauBerhenti(MainActivity.this);
+            } catch (Exception ignored) { }
+        }
+
+        @JavascriptInterface
+        public boolean izinNotif() {
+            return Build.VERSION.SDK_INT < 33 || checkSelfPermission("android.permission.POST_NOTIFICATIONS") == PackageManager.PERMISSION_GRANTED;
+        }
+
+        @JavascriptInterface
+        public void mintaIzinNotif() {
+            runOnUiThread(new Runnable() {
+                @Override public void run() {
+                    if (Build.VERSION.SDK_INT >= 33) requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, REQ_NOTIF);
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public boolean bebasBaterai() {
+            if (Build.VERSION.SDK_INT < 23) return true;
+            PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
+            return pm != null && pm.isIgnoringBatteryOptimizations(getPackageName());
+        }
+
+        @JavascriptInterface
+        public void mintaBebasBaterai() {
+            runOnUiThread(new Runnable() {
+                @Override public void run() {
+                    try {
+                        Intent i = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:" + getPackageName()));
+                        startActivity(i);
+                    } catch (Exception ignored) { }
+                }
+            });
+        }
+
         @JavascriptInterface
         public void pilihBin() {
             runOnUiThread(new Runnable() {

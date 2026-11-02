@@ -163,6 +163,35 @@ progress{width:100%;height:12px;margin:12px 0 4px;accent-color:var(--water)}
   .water::before,.water::after,.dial::before,.impeller,.tank i,.dot,.dot::after,.pb-state,.badge::before{animation:none!important}
   .water{transition:none}
 }
+
+/* ---------- Fitur baru: jadwal, level, nama, notifikasi ---------- */
+.sw{position:relative;display:inline-block;width:46px;height:26px;margin:0;flex:none}
+.sw input{opacity:0;width:0;height:0;position:absolute}
+.sw i{position:absolute;inset:0;border-radius:99px;background:var(--surf2);border:1px solid var(--edge);transition:background .2s}
+.sw i::after{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s}
+.sw input:checked + i{background:var(--run)}
+.sw input:checked + i::after{transform:translateX(20px);background:#03261B}
+.sw input:focus-visible + i{outline:3px solid var(--water);outline-offset:2px}
+.jslot{border-top:1px solid var(--edge);padding:14px 0 6px}
+.jslot:first-of-type{border-top:0;padding-top:0}
+.jhead{display:flex;align-items:center;gap:12px;font-size:16px;margin-bottom:4px}
+.jrow{display:flex;gap:10px}.jrow>div{flex:1}
+.jrow label{margin-top:8px}
+.jslot.off .jrow,.jslot.off .jdays{opacity:.45}
+.jdays{display:flex;gap:6px;margin:12px 0 8px;flex-wrap:nowrap}
+.jdays .chip{flex:1;padding:9px 0;text-align:center;font-size:13px;margin:0}
+.leg{display:flex;gap:16px;font-size:13px;color:var(--muted);margin:2px 0 6px}
+.leg i{display:inline-block;width:12px;height:4px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.chart .ln7,.chart .ln8{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.chart .ln7{stroke:var(--water)}.chart .ln8{stroke:var(--run)}
+.chart .pt7{fill:var(--water)}.chart .pt8{fill:var(--run)}
+.linkbtn{background:none;border:0;padding:6px 8px;margin:8px auto 0;color:var(--water);font-size:14px;font-weight:600;text-decoration:underline;display:none}
+.ck{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--edge);font-size:15px;margin:0;color:var(--text)}
+.ck:last-of-type{border-bottom:0}
+.ck .num{width:84px;padding:8px 10px;text-align:center}
+.ck small{display:block;color:var(--muted);font-size:12.5px}
+.who{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:4px 0;color:var(--muted)}
+.who b{color:var(--text)}
 </style>
 </head>
 <body>
@@ -186,6 +215,7 @@ progress{width:100%;height:12px;margin:12px 0 4px;accent-color:var(--water)}
       </div>
     </div>
     <div class="pb-sub" id="pumpSub">Belum ada data</div>
+    <button class="linkbtn" id="nameNudge">Isi nama Anda supaya tercatat di riwayat</button>
 
     <div class="pb-timer">
       <div class="pb-tl">Timer saat dinyalakan dari aplikasi (menit)</div>
@@ -268,14 +298,61 @@ progress{width:100%;height:12px;margin:12px 0 4px;accent-color:var(--water)}
   </div>
 
   <div class="card">
+    <h2>Level air toren</h2>
+    <div class="seg" id="lvlSeg">
+      <button data-r="24" class="sel">24 jam</button>
+      <button data-r="168">7 hari</button>
+      <button data-r="720">30 hari</button>
+    </div>
+    <div class="leg"><span><i style="background:var(--water)"></i>Toren D7</span><span><i style="background:var(--run)"></i>Toren D8</span></div>
+    <div id="lvlBox"><div class="empty">Memuat...</div></div>
+    <div class="small" id="lvlNote" style="margin-top:6px"></div>
+  </div>
+
+  <div class="card">
     <h2>Daftar nyala dan mati</h2>
     <div id="histList"><div class="empty">Memuat...</div></div>
     <button class="full" id="btnHistRefresh" style="margin-top:12px">Muat ulang riwayat</button>
   </div>
 </section>
 
+<!-- ============ JADWAL ============ -->
+<section id="pg-jdw" class="page">
+  <div class="card">
+    <h2>Jadwal pompa harian</h2>
+    <p class="small" style="margin-top:0">Pompa menyala sendiri pada jam dan hari yang dipilih, lalu mati setelah lama nyala habis. Jadwal disimpan di alat, jadi tetap jalan walau internet mati. Jam mengikuti WIB.</p>
+    <div id="jdwList"><div class="empty">Memuat...</div></div>
+    <button class="primary full" id="btnJdwSave" style="margin-top:12px" disabled>Simpan jadwal</button>
+    <p class="small">Pompa yang sedang menyala tidak ditimpa jadwal. Tombol Matikan di aplikasi dan saklar manual tetap bisa menghentikan pompa kapan saja.</p>
+  </div>
+</section>
+
 <!-- ============ KALIBRASI ============ -->
 <section id="pg-cal" class="page">
+  <div class="card">
+    <h2>Nama Anda</h2>
+    <p class="small" style="margin-top:0">Nama ini dicatat di riwayat setiap kali Anda menyalakan pompa dari aplikasi. Diisi sendiri di ponsel ini, tidak ada verifikasi.</p>
+    <input id="nameInput" type="text" maxlength="10" placeholder="Contoh Budi" autocomplete="off">
+    <button class="full" id="btnSaveName" style="margin-top:10px">Simpan nama</button>
+  </div>
+
+  <div class="card" id="ntfCard">
+    <h2>Notifikasi</h2>
+    <div id="ntfWeb" class="small" style="margin-top:0;display:none">Notifikasi hanya tersedia di aplikasi Android. Pasang aplikasinya untuk menerima pemberitahuan toren dan pompa.</div>
+    <div id="ntfBox" style="display:none">
+      <p class="small" style="margin-top:0">Aplikasi memantau alat di latar belakang dan memberi tahu Anda. Gratis dan tanpa Telegram.</p>
+      <div class="ck"><span>Toren hampir kosong<small>Notifikasi saat air di bawah batas</small></span><span style="display:flex;align-items:center;gap:6px"><input class="num" id="numRendah" type="number" min="1" max="60" value="20">%<label class="sw" style="margin:0 0 0 8px"><input type="checkbox" id="ckRendah" checked><i></i></label></span></div>
+      <div class="ck"><span>Toren penuh<small>Notifikasi saat air di atas batas</small></span><span style="display:flex;align-items:center;gap:6px"><input class="num" id="numPenuh" type="number" min="60" max="100" value="95">%<label class="sw" style="margin:0 0 0 8px"><input type="checkbox" id="ckPenuh" checked><i></i></label></span></div>
+      <div class="ck"><span>Alat terputus<small>Alat tidak terhubung lebih dari 3 menit</small></span><label class="sw"><input type="checkbox" id="ckPutus" checked><i></i></label></div>
+      <div class="ck"><span>Pompa menyala atau mati<small>Termasuk dari saklar, jadwal, dan pengguna lain</small></span><label class="sw"><input type="checkbox" id="ckPompa"><i></i></label></div>
+      <button class="primary full" id="btnNtf" style="margin-top:12px">Simpan pengaturan notifikasi</button>
+      <button class="full" id="btnIzin" style="margin-top:10px;display:none">Izinkan notifikasi</button>
+      <button class="full" id="btnBaterai" style="margin-top:10px;display:none">Izinkan jalan di latar belakang</button>
+      <div class="small" id="ntfInfo" style="margin-top:8px"></div>
+      <div class="warnbox">Pemantauan memakai sedikit baterai karena ponsel menerima kabar dari alat terus menerus. Agar tidak dihentikan sistem saat layar mati, izinkan jalan di latar belakang. Matikan semua pilihan di atas bila ingin menghentikan pemantauan.</div>
+    </div>
+  </div>
+
   <div class="card">
     <h2>Pilih toren</h2>
     <div class="chips" id="calTank">
@@ -301,6 +378,12 @@ progress{width:100%;height:12px;margin:12px 0 4px;accent-color:var(--water)}
     <label for="capInput">Kapasitas toren terpilih (liter)</label>
     <input id="capInput" type="number" min="1" placeholder="Contoh 1000">
     <button class="full" id="btnSaveCap" style="margin-top:10px">Simpan kapasitas</button>
+  </div>
+
+  <div class="card">
+    <h2>Ganti WiFi alat</h2>
+    <p class="small" style="margin-top:0">Untuk memindahkan alat ke WiFi lain tanpa upload ulang program. Tekan tombol di bawah, lalu alat membuka WiFi bernama <b>KontrolPompa-Setup</b> selama 10 menit (sandi pompa1234). Sambungkan ponsel ke WiFi itu, buka <b>http://192.168.4.1</b>, pilih WiFi baru dan isi sandinya. Portal juga terbuka otomatis bila alat kehilangan WiFi lebih dari semenit.</p>
+    <button class="full" id="btnPortal">Buka portal WiFi di alat</button>
   </div>
 
   <div class="card" id="otaCard" style="display:none">
@@ -330,7 +413,8 @@ progress{width:100%;height:12px;margin:12px 0 4px;accent-color:var(--water)}
 <nav>
   <button class="active" data-pg="home" aria-label="Beranda"><svg viewBox="0 0 24 24"><path d="M12 3.5c3.2 4 5.5 6.8 5.5 9.6a5.5 5.5 0 0 1-11 0c0-2.8 2.3-5.6 5.5-9.6z"/></svg>Beranda</button>
   <button data-pg="hist" aria-label="Riwayat"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Riwayat</button>
-  <button data-pg="cal" aria-label="Kalibrasi"><svg viewBox="0 0 24 24"><path d="M5 5v14M12 5v14M19 5v14"/><circle cx="5" cy="9" r="2" fill="#0C2634"/><circle cx="12" cy="15" r="2" fill="#0C2634"/><circle cx="19" cy="8" r="2" fill="#0C2634"/></svg>Kalibrasi</button>
+  <button data-pg="jdw" aria-label="Jadwal"><svg viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg>Jadwal</button>
+  <button data-pg="cal" aria-label="Pengaturan"><svg viewBox="0 0 24 24"><path d="M5 5v14M12 5v14M19 5v14"/><circle cx="5" cy="9" r="2" fill="#0C2634"/><circle cx="12" cy="15" r="2" fill="#0C2634"/><circle cx="19" cy="8" r="2" fill="#0C2634"/></svg>Pengaturan</button>
 </nav>
 
 <div id="gate" style="display:none">
@@ -576,6 +660,19 @@ function renderDev(){
 setInterval(renderDev, 3000);
 window.addEventListener("online", renderDev); window.addEventListener("offline", renderDev);
 
+/* ---------- Nama pengguna (dicatat di riwayat) ---------- */
+const esc = t => String(t==null?"":t).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const bersihNama = t => String(t||"").replace(/[^A-Za-z0-9 ._-]/g,"").trim().slice(0,10);
+let NAMA = "";
+try{ NAMA = bersihNama(localStorage.getItem("nama")||""); }catch(e){}
+function tampilNama(){ $("nameInput").value = NAMA; $("nameNudge").style.display = NAMA ? "none" : "block"; }
+$("btnSaveName").onclick = ()=>{
+  NAMA = bersihNama($("nameInput").value);
+  try{ localStorage.setItem("nama", NAMA); }catch(e){}
+  tampilNama(); ntfTerapkan(); toast(NAMA ? "Nama tersimpan" : "Nama dikosongkan");
+};
+$("nameNudge").onclick = ()=>{ document.querySelector('nav button[data-pg=cal]').click(); setTimeout(()=>$("nameInput").focus(), 100); };
+
 /* ---------- Pompa ---------- */
 let timerPilih = 0;
 document.querySelectorAll("#timerChips .chip").forEach(c=>{
@@ -597,7 +694,7 @@ let pendingSeq = 0, pompaPertama = true;
 function renderPompa(s){ pompaS = s || {state:"OFF", durasi:0, seq:0, sumber:"-"}; tampilPompa(); }
 function tampilPompa(){
   const s = pompaS, on = s.state==="ON";
-  const dari = s.sumber==="MANUAL" ? "tombol manual" : (s.sumber==="APP" ? "aplikasi" : "");
+  const dari = s.sumber==="MANUAL" ? "tombol manual" : (s.sumber==="JADWAL" ? "jadwal" : (s.sumber==="APP" ? "aplikasi"+(s.oleh ? " ("+s.oleh+")" : "") : ""));
   $("pumpDot").className = "dot"+(on?" on":"");
   $("pumpText").textContent = on ? "MENYALA" : "MATI";
   if(on && s.durasi>0 && s.seq){
@@ -616,7 +713,7 @@ function onPompa(v){
   if(pendingSeq && s.seq===pendingSeq){
     pendingSeq = 0; toast(s.state==="ON" ? "Pompa menyala" : "Pompa mati");
   } else if(prev.state!==s.state){
-    toast((s.state==="ON" ? "Pompa menyala" : "Pompa mati")+(s.sumber==="MANUAL" ? " (tombol manual)" : ""));
+    toast((s.state==="ON" ? "Pompa menyala" : "Pompa mati")+(s.sumber==="MANUAL" ? " (tombol manual)" : (s.sumber==="JADWAL" && s.state==="ON" ? " (jadwal)" : "")));
   }
   if(prev.state==="ON" && s.state==="OFF"){ histDirty = true; if($("pg-hist").classList.contains("active")) setTimeout(loadHist, 4000); }
   if(prev.state!=="ON" && s.state==="ON" && $("pg-hist").classList.contains("active")) renderHist();
@@ -628,7 +725,7 @@ async function kirimPompa(state){
   const seq = Date.now();
   try{
     pendingSeq = seq;
-    await dbPut("pompa/cmd", { state, durasi, seq });
+    await dbPut("pompa/cmd", NAMA ? { state, durasi, seq, oleh:NAMA } : { state, durasi, seq });
     toast(devOnline ? "Perintah dikirim" : "Perintah dikirim, tapi alat sedang terputus");
     setTimeout(()=>{ if(pendingSeq===seq){ pendingSeq=0; toast(devOnline ? "Alat belum membalas" : "Alat terputus, perintah belum dijalankan"); } }, 9000);
   }catch(e){ pendingSeq=0; toast("Gagal: "+e.message); }
@@ -651,6 +748,11 @@ function fmtDur(sec){
 function fmtJam(ts){ const d=new Date(ts*1000); return `${p2(d.getHours())}:${p2(d.getMinutes())}`; }
 function fmtTgl(ts){ const d=new Date(ts*1000); return `${HARI[d.getDay()]}, ${d.getDate()} ${BLN[d.getMonth()]} ${d.getFullYear()}`; }
 const ALASAN = { TIMER:"Timer selesai", MANUAL:"Dimatikan dari tombol", APP:"Dimatikan dari aplikasi", BATAS:"Batas aman 4 jam", GANTI:"Diganti perintah baru", BERJALAN:"Masih menyala" };
+function sumberLabel(x){
+  if(x.sumber==="MANUAL") return "dari tombol";
+  if(x.sumber==="JADWAL") return "dari jadwal";
+  return "dari aplikasi"+(x.oleh ? " oleh <span>"+esc(x.oleh)+"</span>" : "");
+}
 function startOfDay(d){ const x=new Date(d); x.setHours(0,0,0,0); return x; }
 function startOfWeek(d){ const x=startOfDay(d); x.setDate(x.getDate()-((x.getDay()+6)%7)); return x; }   // Senin
 function startOfMonth(d){ const x=startOfDay(d); x.setDate(1); return x; }
@@ -697,6 +799,17 @@ function renderSummary(sesi){
   for(const [lbl,r] of rows) h += `<div class="kv"><span>${lbl}</span><b>${r.n? fmtDur(r.sum)+" · "+r.n+"x" : "tidak menyala"}</b></div>`;
   const w = rows[1][1];
   if(w.n) h += `<div class="small" style="margin-top:8px">Dalam 7 hari terakhir pompa menyala ${w.n} kali, total ${fmtDur(w.sum)}, rata-rata ${fmtDur(w.sum/w.n)} sekali nyala.</div>`;
+  const per = {}; const t30 = d30.getTime()/1000;
+  for(const x of sesi){
+    if(x.mulai<t30) continue;
+    const k = x.sumber==="MANUAL" ? "Tombol manual" : (x.sumber==="JADWAL" ? "Jadwal" : (x.oleh || "Aplikasi tanpa nama"));
+    (per[k] = per[k] || {sum:0,n:0}); per[k].sum += x.detik; per[k].n++;
+  }
+  const kunci = Object.keys(per).sort((a,b)=>per[b].sum-per[a].sum);
+  if(kunci.length){
+    h += `<div class="small" style="margin:14px 0 4px">Menurut pengguna dalam 30 hari terakhir</div>`;
+    for(const k of kunci) h += `<div class="who"><span>${esc(k)}</span><b>${fmtDur(per[k].sum)} · ${per[k].n}x</b></div>`;
+  }
   $("sumList").innerHTML = h;
 }
 function buatBucket(sesi){
@@ -735,6 +848,54 @@ function renderChart(bs){
   $("chartBox").innerHTML = svg;
   $("chartBox").querySelectorAll(".bar").forEach(r=>{ r.onclick=()=>{ histSel = Number(r.dataset.i); renderHist(true); }; });
 }
+/* ---------- Grafik level air ---------- */
+let lvlRange = 24, lvlData = [], lvlLoaded = false;
+async function fetchLevel(){
+  if(DEMO) return [];
+  const limit = {24:110, 168:720, 720:2950}[lvlRange];
+  const r = await fetch(`${DB_URL}/data/${MASTER}_level.json?orderBy=%22%24key%22&limitToLast=${limit}`, {cache:"no-store"});
+  if(!r.ok) throw new Error("Gagal membaca level");
+  const o = await r.json();
+  return Object.values(o||{}).filter(x=>x && x.t>0).sort((a,b)=>a.t-b.t);
+}
+async function loadLevel(){
+  try{ lvlData = await fetchLevel(); lvlLoaded = true; renderLevel(); }
+  catch(e){ $("lvlBox").innerHTML = `<div class="empty">${esc(e.message)}. Periksa internet atau aturan database.</div>`; $("lvlNote").textContent=""; }
+}
+function renderLevel(){
+  const now = Date.now(), t0 = now - lvlRange*3600*1000;
+  const d = lvlData.filter(x=>x.t>=t0);
+  if(!d.length){ $("lvlBox").innerHTML = `<div class="empty">${lvlLoaded ? "Belum ada catatan level di periode ini. Alat mencatat tiap 15 menit saat online." : "Memuat..."}</div>`; $("lvlNote").textContent=""; return; }
+  const W=320,H=170,L=30,R=8,T=12,B=24, pw=W-L-R, ph=H-T-B;
+  const X = t => L + (t-t0)/(now-t0)*pw, Y = v => T + ph - ph*v/100;
+  let svg = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Grafik level air toren">`;
+  for(const v of [0,25,50,75,100]) svg += `<line class="grid" x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${L-4}" y="${Y(v)+3}" text-anchor="end">${v}</text>`;
+  // label waktu
+  const ticks = [];
+  if(lvlRange===24){ const s=new Date(t0); s.setMinutes(0,0,0); for(let t=s.getTime()+3600000; t<now; t+=3600000){ const h=new Date(t).getHours(); if(h%6===0) ticks.push([t, p2(h)+":00"]); } }
+  else { const s=startOfDay(new Date(t0)); const stepD = lvlRange===168 ? 1 : 5; for(let t=s.getTime()+86400000; t<now; t+=86400000*stepD){ const dd=new Date(t); ticks.push([t, lvlRange===168 ? HARI[dd.getDay()] : dd.getDate()+" "+BLN[dd.getMonth()]]); } }
+  for(const [t,l] of ticks) svg += `<text x="${X(t)}" y="${H-8}" text-anchor="middle">${l}</text>`;
+  const GAP = 45*60*1000;
+  for(const [key,cls] of [["d7","7"],["d8","8"]]){
+    let path="", prev=null, seg=0;
+    const pts = d.filter(x=>typeof x[key]==="number");
+    for(const x of pts){
+      if(prev && x.t-prev.t<=GAP){ path += `L${X(x.t).toFixed(1)} ${Y(x[key]).toFixed(1)}`; seg++; }
+      else { if(prev && seg===0) svg += `<circle class="pt${cls}" cx="${X(prev.t)}" cy="${Y(prev[key])}" r="2"/>`; path += `M${X(x.t).toFixed(1)} ${Y(x[key]).toFixed(1)}`; seg=0; }
+      prev = x;
+    }
+    if(prev && seg===0) svg += `<circle class="pt${cls}" cx="${X(prev.t)}" cy="${Y(prev[key])}" r="2"/>`;
+    if(path) svg = svg.replace(/$/, "") + `<path class="ln${cls}" d="${path}"/>`;
+  }
+  svg += "</svg>";
+  $("lvlBox").innerHTML = svg;
+  const ring = k => { const v=d.map(x=>x[k]).filter(x=>typeof x==="number"); return v.length ? `terendah ${Math.min(...v)}%, tertinggi ${Math.max(...v)}%, terakhir ${v[v.length-1]}%` : "belum ada data"; };
+  $("lvlNote").textContent = `D7: ${ring("d7")}. D8: ${ring("d8")}.`;
+}
+document.querySelectorAll("#lvlSeg button").forEach(b=>{
+  b.onclick=()=>{ document.querySelectorAll("#lvlSeg button").forEach(x=>x.classList.remove("sel")); b.classList.add("sel"); lvlRange=Number(b.dataset.r); lvlLoaded=false; renderLevel(); loadLevel(); };
+});
+
 function renderList(bs){
   const rows = bs.slice().reverse().filter(b=>b.n>0);
   if(!rows.length){ $("histList").innerHTML = `<div class="empty">${histLoaded? "Belum ada riwayat pompa menyala di periode ini." : "Memuat..."}</div>`; return; }
@@ -744,7 +905,7 @@ function renderList(bs){
     h += `<details class="b" ${histSel===idx?"open":""}><summary><span>${b.label}</span><b>${fmtDur(b.sum)} · ${b.n}x</b></summary>`;
     for(const x of b.sesi.slice().reverse()){
       const tglBeda = new Date(x.mulai*1000).toDateString() !== new Date(x.selesai*1000).toDateString();
-      h += `<div class="ses">Nyala <span>${fmtJam(x.mulai)}</span> sampai ${x.live? "<span>sekarang</span>" : "mati <span>"+fmtJam(x.selesai)+(tglBeda?" ("+new Date(x.selesai*1000).getDate()+" "+BLN[new Date(x.selesai*1000).getMonth()]+")":"")+"</span>"}<br>Lama <span>${fmtDur(x.detik)}</span> · ${x.sumber==="MANUAL"?"dari tombol":"dari aplikasi"} · ${ALASAN[x.alasan]||x.alasan}</div>`;
+      h += `<div class="ses">Nyala <span>${fmtJam(x.mulai)}</span> sampai ${x.live? "<span>sekarang</span>" : "mati <span>"+fmtJam(x.selesai)+(tglBeda?" ("+new Date(x.selesai*1000).getDate()+" "+BLN[new Date(x.selesai*1000).getMonth()]+")":"")+"</span>"}<br>Lama <span>${fmtDur(x.detik)}</span> · ${sumberLabel(x)} · ${ALASAN[x.alasan]||x.alasan}</div>`;
     }
     h += `</details>`;
   }
@@ -762,8 +923,105 @@ function renderHist(keepSel){
 document.querySelectorAll("#grpSeg button").forEach(b=>{
   b.onclick=()=>{ document.querySelectorAll("#grpSeg button").forEach(x=>x.classList.remove("sel")); b.classList.add("sel"); histGroup=b.dataset.g; histSel=null; renderHist(); };
 });
-$("btnHistRefresh").onclick = async()=>{ await loadHist(); toast("Riwayat dimuat ulang"); };
+$("btnHistRefresh").onclick = async()=>{ await Promise.all([loadHist(), loadLevel()]); toast("Riwayat dimuat ulang"); };
 setInterval(()=>{ if(pompaS.state==="ON" && $("pg-hist").classList.contains("active")) renderHist(true); }, 30000);
+
+/* ---------- Jadwal harian ---------- */
+const NAMA_HARI = ["Min","Sen","Sel","Rab","Kam","Jum","Sab"];
+let jdwData = {}, jdwEdit = false;
+function onJadwal(v){ jdwData = v || {}; if(!jdwEdit) renderJadwal(); }
+function renderJadwal(){
+  let h = "";
+  for(let i=0;i<4;i++){
+    const j = Object.assign({aktif:false, jam:6, menit:0, durasi:20, hari:127}, jdwData["j"+i] || {});
+    const hh = p2(j.jam)+":"+p2(j.menit);
+    h += `<div class="jslot${j.aktif?"":" off"}" data-i="${i}">
+      <div class="jhead"><label class="sw" style="margin:0"><input type="checkbox" class="jon"${j.aktif?" checked":""} aria-label="Aktifkan jadwal ${i+1}"><i></i></label><b>Jadwal ${i+1}</b></div>
+      <div class="jrow"><div><label>Jam nyala</label><input type="time" class="jtime" value="${hh}"></div><div><label>Lama nyala (menit)</label><input type="number" class="jdur" min="1" max="240" value="${j.durasi}"></div></div>
+      <div class="jdays">${NAMA_HARI.map((n,d)=>`<span class="chip${(j.hari>>d)&1?" sel":""}" data-d="${d}" tabindex="0">${n}</span>`).join("")}</div>
+    </div>`;
+  }
+  $("jdwList").innerHTML = h;
+  $("btnJdwSave").disabled = !jdwEdit;
+  const tandai = ()=>{ jdwEdit = true; $("btnJdwSave").disabled = false; };
+  $("jdwList").querySelectorAll(".jslot").forEach(sl=>{
+    sl.querySelector(".jon").onchange = e=>{ sl.classList.toggle("off", !e.target.checked); tandai(); };
+    sl.querySelector(".jtime").oninput = tandai; sl.querySelector(".jdur").oninput = tandai;
+    sl.querySelectorAll(".jdays .chip").forEach(c=>{ c.onclick = ()=>{ c.classList.toggle("sel"); tandai(); }; });
+  });
+}
+$("btnJdwSave").onclick = async ()=>{
+  const out = [];
+  for(const sl of $("jdwList").querySelectorAll(".jslot")){
+    const aktif = sl.querySelector(".jon").checked, t = sl.querySelector(".jtime").value || "";
+    const [jam, menit] = t.split(":").map(Number), durasi = Math.round(Number(sl.querySelector(".jdur").value));
+    let hari = 0; sl.querySelectorAll(".jdays .chip.sel").forEach(c=>hari |= 1<<Number(c.dataset.d));
+    const no = Number(sl.dataset.i)+1;
+    if(aktif){
+      if(!(jam>=0 && jam<=23 && menit>=0 && menit<=59)){ toast(`Jadwal ${no}: isi jam nyala`); return; }
+      if(!(durasi>=1 && durasi<=240)){ toast(`Jadwal ${no}: lama nyala 1 sampai 240 menit`); return; }
+      if(hari===0){ toast(`Jadwal ${no}: pilih minimal satu hari`); return; }
+    }
+    out.push({aktif, jam:jam||0, menit:menit||0, durasi:durasi>=1?Math.min(durasi,240):20, hari:hari||127});
+  }
+  $("btnJdwSave").disabled = true;
+  try{
+    for(let i=0;i<out.length;i++) await dbPut("jadwal/j"+i, out[i]);
+    jdwEdit = false; toast("Jadwal tersimpan, alat memperbarui dalam beberapa detik");
+  }catch(e){ $("btnJdwSave").disabled = false; toast("Gagal: "+e.message); }
+};
+
+/* ---------- Ganti WiFi alat ---------- */
+$("btnPortal").onclick = async ()=>{
+  try{
+    await dbPut("cek/portal", Date.now());
+    toast(devOnline ? "Perintah dikirim. Cari WiFi KontrolPompa-Setup di ponsel" : "Alat sedang terputus, portal terbuka otomatis di alat");
+  }catch(e){ toast("Gagal: "+e.message); }
+};
+
+/* ---------- Notifikasi (aplikasi Android memantau sendiri di latar belakang) ---------- */
+const NTF_DEFAULT = { rendah:true, rendahPct:20, penuh:true, penuhPct:95, putus:true, pompa:false };
+let ntf = Object.assign({}, NTF_DEFAULT);
+try{ ntf = Object.assign(ntf, JSON.parse(localStorage.getItem("ntf")||"{}")); }catch(e){}
+const ANDROID_NTF = !!(window.AndroidOta && window.AndroidOta.aturNotif);
+function ntfTampil(){
+  $("ckRendah").checked = !!ntf.rendah; $("numRendah").value = ntf.rendahPct;
+  $("ckPenuh").checked = !!ntf.penuh;   $("numPenuh").value = ntf.penuhPct;
+  $("ckPutus").checked = !!ntf.putus;   $("ckPompa").checked = !!ntf.pompa;
+}
+function ntfTerapkan(){
+  if(!ANDROID_NTF || !MASTER) return;
+  try{ window.AndroidOta.aturNotif(JSON.stringify(Object.assign({ db:DB_URL, folder:MASTER, nama:NAMA }, ntf))); }catch(e){}
+  ntfInfo();
+}
+function ntfInfo(){
+  if(!ANDROID_NTF) return;
+  let izin = true;
+  try{ izin = window.AndroidOta.izinNotif(); }catch(e){}
+  let bebas = true;
+  try{ bebas = window.AndroidOta.bebasBaterai(); }catch(e){}
+  $("btnIzin").style.display = izin ? "none" : "block";
+  $("btnBaterai").style.display = bebas ? "none" : "block";
+  const ada = ntf.rendah || ntf.penuh || ntf.putus || ntf.pompa;
+  $("ntfInfo").textContent = !izin ? "Notifikasi belum diizinkan. Tekan Izinkan notifikasi."
+    : (ada ? "Pemantauan aktif. Ada ikon kecil di bilah status, itu normal." : "Semua notifikasi dimatikan, pemantauan berhenti.");
+}
+if(ANDROID_NTF){
+  $("ntfBox").style.display = "block"; ntfTampil();
+  $("btnNtf").onclick = ()=>{
+    const r = Math.round(Number($("numRendah").value)), p = Math.round(Number($("numPenuh").value));
+    if(!(r>=1 && r<=60)){ toast("Batas kosong antara 1 sampai 60 persen"); return; }
+    if(!(p>=60 && p<=100)){ toast("Batas penuh antara 60 sampai 100 persen"); return; }
+    ntf = { rendah:$("ckRendah").checked, rendahPct:r, penuh:$("ckPenuh").checked, penuhPct:p, putus:$("ckPutus").checked, pompa:$("ckPompa").checked };
+    try{ localStorage.setItem("ntf", JSON.stringify(ntf)); }catch(e){}
+    ntfTerapkan(); toast("Pengaturan notifikasi tersimpan");
+    try{ if(!window.AndroidOta.izinNotif()) window.AndroidOta.mintaIzinNotif(); }catch(e){}
+  };
+  $("btnBaterai").onclick = ()=>{ try{ window.AndroidOta.mintaBebasBaterai(); }catch(e){} setTimeout(ntfInfo, 2500); };
+  document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) ntfInfo(); });
+  $("btnIzin").onclick = ()=>{ try{ window.AndroidOta.mintaIzinNotif(); }catch(e){} setTimeout(ntfInfo, 1500); };
+  window.izinNotifEvent = ntfInfo;
+} else { $("ntfWeb").style.display = "block"; }
 
 /* ---------- Kalibrasi ---------- */
 let calT = "d7";
@@ -846,7 +1104,8 @@ document.querySelectorAll("nav button").forEach(b=>{
     document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
     $("pg-"+b.dataset.pg).classList.add("active");
     if(b.dataset.pg==="cal") renderCal();
-    if(b.dataset.pg==="hist"){ renderHist(); if(histDirty) loadHist(); }
+    if(b.dataset.pg==="hist"){ renderHist(); if(histDirty) loadHist(); loadLevel(); }
+    if(b.dataset.pg==="jdw") renderJadwal();
   };
 });
 
@@ -857,6 +1116,8 @@ function start(){
   stream("toren", onToren);
   stream("pompa/status", onPompa);
   stream("perangkat", onPerangkat);
+  stream("jadwal", onJadwal);
+  tampilNama(); ntfTerapkan();
   loadHist();
 }
 /* Tukar kode akses menjadi nama folder data. Gagal kalau kode tidak terdaftar. */
